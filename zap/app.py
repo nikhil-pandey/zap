@@ -1,3 +1,4 @@
+import asyncio
 import dataclasses
 import os
 import sys
@@ -143,7 +144,11 @@ class ZapApp:
             self.ui.print("Verbose mode enabled")
             self.ui.data_view(self.config, False, "App Config")
 
-    async def perform_tasks(self, tasks: list[str]):
+    async def perform_tasks(self, tasks: list[str], parallel: bool):
+        if parallel:
+            # TODO: needs some work as everything the state management is not thread safe
+           raise NotImplementedError("Parallel task execution is not implemented yet")
+
         self.ui.print(f"Performing {len(tasks)} tasks")
         final_tasks = []
         for task in tasks:
@@ -155,11 +160,23 @@ class ZapApp:
                     for t in tasks:
                         if t and t.strip() != "":
                             current_tasks.append(t.strip())
-            final_tasks.extend(current_tasks)
+            else:
+                current_tasks.append(task)
+            final_tasks.append((task, current_tasks))
 
-        self.ui.print(f"Final tasks count: {len(final_tasks)}")
-        for task in final_tasks:
-            self.ui.print(f"Task: {task}")
+        async_tasks = []
+        for (name, task_group) in final_tasks:
+            async_tasks.append(self._run_task_group(name, task_group))
+            if not parallel:
+                await async_tasks[-1]
+
+        if parallel:
+            await asyncio.gather(*async_tasks)
+
+    async def _run_task_group(self, group_name, task_group):
+        self.ui.print(f"Running {len(task_group)} in {group_name}")
+        for task in task_group:
+            self.ui.print(f"Task[{group_name}]: {task}")
             context = self.context_manager.get_current_context()
             agent = self.agent_manager.get_agent(context.current_agent)
             await self.handle_input(task, context, agent)

@@ -1,30 +1,30 @@
 # Zap Templating Engine
 
-The Zap Templating Engine is designed to asynchronously render Jinja2 templates while accommodating custom URL and local file inclusions. It's built for dynamic content rendering from both local files and URLs.
+The Zap Templating Engine is a powerful tool designed for asynchronously rendering Jinja2 templates, capable of accommodating content from custom URLs and local files. It's ideal for rendering dynamic content.
 
 ## Usage
 
-To use the Zap Templating Engine, import the `ZapTemplateEngine`.
+Begin by importing the `ZapTemplateEngine`:
 
 ```python
 from zap.templating import ZapTemplateEngine
 ```
 
-### Render Templates
+## Key Features
 
-Render templates by utilizing the `render` method from `ZapTemplateEngine`.
+### Rendering Templates
+Render templates using the `render` method inside the `ZapTemplateEngine` class. Here's a simple example:
 
 ```python
 engine = ZapTemplateEngine()
 template = "Hello, {{ name }}!"
 context = {"name": "World"}
 result = await engine.render(template, context)
-print(result)  # Outputs: "Hello, World!"
+print(result) # Outputs: "Hello, World!"
 ```
 
-### Include File Content
-
-Use the `i` function in your templates to include content from local files.
+### Including File Content
+Leverage the `i` function in your templates to insert content from local files:
 
 ```python
 engine = ZapTemplateEngine()
@@ -33,9 +33,8 @@ result = await engine.render(template)
 # Outputs the content of "/path/to/your/file.txt".
 ```
 
-### Include URL Content
-
-You can also include content from a URL using the same `i` function.
+### Including URL Content
+Use the same `i` function to include content from a URL:
 
 ```python
 engine = ZapTemplateEngine()
@@ -44,9 +43,8 @@ result = await engine.render(template)
 # Outputs the content of "https://example.com".
 ```
 
-### Custom Resolver Usage
-
-Create a custom resolver by extending `PathResolver` and implementing `resolve_file` and `resolve_http` asynchronous methods.
+### Utilizing Custom Path Resolvers
+By extending the `PathResolver` class, you can create a custom path resolver. You'll need to implement the `resolve_file` and `resolve_http` async methods:
 
 ```python
 import asyncio
@@ -57,15 +55,15 @@ custom_resolver = CustomPathResolver('/custom/base/path')
 engine = ZapTemplateEngine(resolver=custom_resolver)
 template = "The content is: {{ i('custom_file.txt') }}"
 result = await engine.render(template)
-print(result)  # Outputs content of "custom_file.txt" using "/custom/base/path" as the base path.
+print(result) # Outputs content of "custom_file.txt" using "/custom/base/path" as the base path.
 ```
 
-## Running Test Cases
+## Testing
 
-Validate functionality with test cases by running:
+Confirm the engine's functionality by running the test cases:
 
 ```sh
 poetry run pytest
 ```
 
-For detailed usage examples and advanced scenarios, please refer to the API documentation.
+For more comprehensive usage examples and advanced use cases, please consult the API documentation.

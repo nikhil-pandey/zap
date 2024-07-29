@@ -1,29 +1,30 @@
-# CLIUX
+# ZAP
 
-CLIUX allows you to customize various aspects of the UI through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `Config` dataclass instance.
+ZAP is an extensive framework designed for creating and managing agents with various capabilities. It provides a rich command-line user interface (CLIUX) powered by the `rich` library to enhance console outputs and interactivity, facilitating seamless development workflows.
 
 ## Features
 
-- Rich console output with syntax highlighting, tables, and panels
-- Interactive prompts for various types of user input
-- Asynchronous input handling
-- Input logging to a history file
-- Background exporting of console output to HTML, SVG, and text formats
-- Progress bars and spinners for long-running tasks
-- Markdown rendering in the console
-- File tree visualization
-- Exception handling with rich tracebacks
-- Customizable configuration through dictionary or file input
+### Framework Components
+- **Agents:** Modular agent classes like `ChatAgent`, `CodeAgent`, and `EchoAgent`.
+- **Commands:** System for managing commands such as file context management, git operations, and utility commands.
+- **UI System (CLIUX):** Advanced UI features utilizing `rich` for enhanced console outputs.
+- **Configuration:** Flexible system supporting JSON, YAML, and TOML formats.
 
-## Configuration
+### CLIUX Features
+- **Rich Console Output:** Syntax highlighting, panels, tables, and more.
+- **Interactive Prompts:** Asynchronous user input handling.
+- **Input Logging:** Log inputs to a history file.
+- **Exporting:** Export console output to HTML, SVG, or text.
+- **Progress Indicators:** Spinners and progress bars.
+- **Markdown Rendering:** Display markdown content.
+- **File Tree Visualization:** Display file and directory structures.
+- **Customizable Configuration:** Easily configured via dictionaries or files (JSON, YAML, TOML).
 
-CLIUX allows you to customize various aspects of the UI through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `Config` dataclass instance.
+## Getting Started
 
-### Example Configuration
+### Configuration
 
-Here's an example of how the configuration might look in different formats:
-
-#### JSON
+#### JSON Example
 ```json
 {
     "theme": "monokai",
@@ -36,7 +37,7 @@ Here's an example of how the configuration might look in different formats:
 }
 ```
 
-#### YAML
+#### YAML Example
 ```yaml
 theme: monokai
 history_file: my_history.log
@@ -47,7 +48,7 @@ live_refresh_per_second: 5
 verbose: true
 ```
 
-#### TOML
+#### TOML Example
 ```toml
 theme = "monokai"
 history_file = "my_history.log"
@@ -58,15 +59,14 @@ live_refresh_per_second = 5
 verbose = true
 ```
 
-## Usage
+### Usage Example
 
-Here's a basic example of how to use CLIUX with configuration:
+Here’s a quick example of how to use ZAP's CLIUX with a sample configuration:
 
 ```python
 import asyncio
-from zap.cliux import UI, Config
+from zap.cliux import UI
 
-# Example configuration dictionary
 config = {
     "theme": "monokai",
     "history_file": "my_history.log",
@@ -80,7 +80,7 @@ config = {
 ui = UI(config)
 
 async def main():
-    ui.panel("Welcome to CLIUX Demo", title="Hello")
+    ui.panel("Welcome to ZAP CLIUX Demo", title="Hello")
     
     with ui.spinner("Processing data"):
         await asyncio.sleep(2)
@@ -97,10 +97,13 @@ async def main():
     code = "print('Hello, World!')"
     ui.syntax_highlight(code, "python")
 
-    ui.tree(["/home/user/documents", "/home/user/downloads", "/home/user/pictures"])
+    ui.tree([
+        "/home/user/documents", 
+        "/home/user/downloads", 
+        "/home/user/pictures"
+    ])
 
-    component = Panel(...)
-    with ui.live_output(component) as live:
+    with ui.live_output("Processing...") as live:
         for i in range(10):
             live.update(f"Updating live output: {i}")
             await asyncio.sleep(0.5)
@@ -110,3 +113,69 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+## Core Methods
+
+- **input_async(prompt):** Asynchronous user input.
+- **print(
+args, 
+
+kwargs):** Print messages to the console.
+- **debug(message):** Print a debug message.
+- **info(message):** Print an info message.
+- **warning(message):** Print a warning message.
+- **error(message):** Print an error message.
+- **exception(e, message):** Print an exception message.
+- **panel(content, title):** Display content in a panel.
+- **table(title, columns, rows):** Display a table.
+- **display_table(title, data):** Display data in a table format.
+- **spinner(message):** Display a spinner with a message.
+- **progress(total):** Show a progress bar.
+- **data_view(data, methods, title):** Detailed data view.
+- **syntax_highlight(code, language, line_numbers):** Display syntax-highlighted code.
+- **tree(paths):** Show a tree view of file paths.
+- **live_output(content):** Display live output.
+- **markdown(md_string):** Render markdown content.
+- **log_input(input_str):** Log user input.
+- **export_html(filename):** Export console output to HTML.
+- **export_svg(filename):** Export console output to SVG.
+- **export_text(filename):** Export console output to a text file.
+- **export_async(filename, fmt):** Export console output asynchronously.
+
+## Agents
+
+Configure ZAP agents using YAML files, each with unique capabilities and configurations.
+
+### Example Agent Configuration
+
+#### Echo Agent
+```yaml
+name: echo
+type: EchoAgent
+system_prompt: prompts/chat/system.j2
+```
+
+## Command System
+
+ZAP supports a diverse array of commands for handling development workflows, file context management, and more.
+
+### Example Commands
+
+- **add:** Add files to the context.
+- **remove:** Remove files from the context.
+- **diff:** Show git diff.
+- **lint:** Run linting.
+- **build:** Run build process.
+- **test:** Run tests.
+- **shell:** Execute a shell command.
+- **switch_context:** Switch to a different context.
+- **save_context:** Save the current context.
+- **list_contexts:** List all available contexts.
+
+## Contributors
+
+ZAP is developed and maintained by a collaborative team of developers. Contributions are welcome!
+
+## License
+
+ZAP is licensed under the MIT License.

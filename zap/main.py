@@ -16,7 +16,11 @@ def parse_arguments():
     load_dotenv()
     parser = argparse.ArgumentParser(description="Zap CLI")
     parser.add_argument(
-        "--tasks", type=str, nargs='*', default=None, help="Specify the tasks to be performed either inline or file path"
+        "--tasks", type=str, nargs='*', default=None,
+        help="Specify the tasks to be performed either inline or file path"
+    )
+    parser.add_argument(
+        '--parallel', action='store_true', help='Run tasks in parallel'
     )
     parser.add_argument(
         "--openai-api-key", type=str, default=None, help="OpenAI API key"
@@ -158,7 +162,7 @@ async def main():
         await app.initialize(args)
 
         if args.tasks:
-            await app.perform_tasks(args.tasks)
+            await app.perform_tasks(args.tasks, args.parallel)
             return
 
         await app.run()

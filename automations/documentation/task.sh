@@ -1,1 +1,0 @@
-python -m zap --tasks templating_documentation.txt --verbose

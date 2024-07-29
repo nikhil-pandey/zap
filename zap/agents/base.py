@@ -38,6 +38,13 @@ class Agent(ABC):
             self.ui.warning(f"Model {config.model} does not support parallel tool calling")
 
     async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
+        try:
+            return await self._try_process(message, context, template_context)
+        except Exception as e:
+            self.ui.exception(e, f"Failed to process message: {message}")
+            raise
+
+    async def _try_process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())

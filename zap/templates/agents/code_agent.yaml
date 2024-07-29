@@ -2,4 +2,11 @@ name: code
 type: CodeAgent
 system_prompt: prompts/code/system.j2
 user_prompt: prompts/code/user.j2
-tools: []
+tools:
+  - read_file
+  - write_file
+  - list_files
+  - delete_file
+  - build_project
+  - lint_project
+  - run_tests

@@ -9,5 +9,5 @@ class AgentConfig:
     system_prompt: str
     user_prompt: Optional[str] = None
     tools: List[str] = field(default_factory=list)
-    model: str = "gpt-4"
+    model: str = "gpt-4o"
     provider: str = "azure"
