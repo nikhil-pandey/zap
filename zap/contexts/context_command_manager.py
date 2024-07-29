@@ -28,25 +28,14 @@ class ContextCommandManager:
 
     async def list_contexts(self):
         contexts = self.context_manager.list_contexts()
-        table = Table(show_lines=True, show_header=True, header_style="bold magenta")
-        table.add_column("Context", style="dim", width=15)
-        table.add_column("Agent", style="dim", width=15)
-        table.add_column("Messages Count", style="dim", width=10)
-        table.add_column("Last message", style="dim", width=60)
-        table.title = "Messages"
-        for context_name in contexts:
-            context = self.context_manager.contexts[context_name]
-            other_agents = set([
-                message.agent for message in context.messages if message.agent != context.current_agent
-            ])
-            other = (f" ({', '.join(other_agents)})" if other_agents else "")
-            table.add_row(
-                context.name if context.name != context.current_agent else FILE_ICONS['zap'] + context.name,
-                context.current_agent + other,
-                str(len(context.messages)) if context.messages else "",
-                f"{context.messages[-1].agent}: {context.messages[-1].content}" if context.messages else "",
-            )
-        self.ui.print(table)
+        self.ui.table(
+            "Contexts",
+            ["Context", "Agent", "Messages Count", "Last message"],
+            [
+                [context.name, context.current_agent, str(len(context.messages)), context.messages[-1].content if context.messages else ""]
+                for context in self.context_manager.contexts.values()
+            ]
+        )
 
     async def show_current_context(self):
         context = self.context_manager.get_current_context()

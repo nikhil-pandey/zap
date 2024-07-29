@@ -126,7 +126,7 @@ class ZapApp:
                 self.ui.exception(e, "An error occurred")
 
     async def _show_startup_banner(self):
-        self.ui.print(
+        self.ui.raw(
             Panel(
                 Align.left(
                     Text.assemble(

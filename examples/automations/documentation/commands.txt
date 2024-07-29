@@ -1,6 +1,8 @@
+/switch_context CommandsDocumentation
 /switch_agent documentation
 /add zap/commands zap/contexts/context_command_manager.py
+/remove zap/commands/README.md
+/ls
 Generate documentation for the following:\n<code>{{files}}\n</code>\nThe code might have changed significantly since the last time README.md was updated. Prepare a draft. DO NOT UPDATE THE README just yet. LET ME REVIEW IT AND ONCE I GIVE YOU THE GO AHEAD, YOU CAN UPDATE THE README.md
-Take a moment to reflect back on your work. You have done a great job. We want focus on the usage and example code above all else. Make sure the documentation is clear and concise.  DO NOT add any boilerplate around contribution, license and things like that. Keep it to the point and concise.
-That looks good. You can now update the README.md file. Whatever you add to the file is going to be the final version. So, make sure you are happy with it. Also do not put any comments or text that you would live me to see. I will not see it. The final version will be published as-is. Make sure to save it to `zap/commands/README.md`
-/archive_context ZAPCommandsDocumentation
+Take a moment to reflect back on your work. You have done a great job. We want focus on the usage and example code above all else. Make sure the documentation is clear and concise.  DO NOT add any boilerplate around contribution, license and things like that. Keep it to the point and concise. Also you are not writing documentation for ZAP. But for the agents. So, keep that in mind.
+You can now update the README.md file. Whatever you add to the file is going to be the final version. So, make sure you are happy with it. Also do not put any comments or text that you would live me to see. I will not see it. The final version will be published as-is. Make sure to save it to `zap/commands/README.md`

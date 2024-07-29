@@ -1,181 +1,213 @@
-# ZAP
+# Zap Agents Documentation
 
-ZAP is an extensive framework designed for creating and managing agents with various capabilities. It provides a rich command-line user interface (CLIUX) powered by the `rich` library to enhance console outputs and interactivity, facilitating seamless development workflows.
+## Quick Start
 
-## Features
+### Prerequisites
 
-### Framework Components
-- **Agents:** Modular agent classes like `ChatAgent`, `CodeAgent`, and `EchoAgent`.
-- **Commands:** System for managing commands such as file context management, git operations, and utility commands.
-- **UI System (CLIUX):** Advanced UI features utilizing `rich` for enhanced console outputs.
-- **Configuration:** Flexible system supporting JSON, YAML, and TOML formats.
+Ensure you have Python version 3.11 or greater installed and Poetry as a package manager.
 
-### CLIUX Features
-- **Rich Console Output:** Syntax highlighting, panels, tables, and more.
-- **Interactive Prompts:** Asynchronous user input handling.
-- **Input Logging:** Log inputs to a history file.
-- **Exporting:** Export console output to HTML, SVG, or text.
-- **Progress Indicators:** Spinners and progress bars.
-- **Markdown Rendering:** Display markdown content.
-- **File Tree Visualization:** Display file and directory structures.
-- **Customizable Configuration:** Easily configured via dictionaries or files (JSON, YAML, TOML).
+### Installation
 
-## Getting Started
+1. Clone the repository:
 
-### Configuration
+    ```sh
+    git clone https://github.com/yourusername/zap.git
+    cd zap
+    ```
 
-#### JSON Example
-```json
-{
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
-    "verbose": true
-}
+2. Install dependencies using Poetry:
+
+    ```sh
+    poetry install
+    ```
+
+### Running an Agent
+
+Run the following command to start an agent using Zap CLI:
+
+```sh
+poetry run python zap/main.py --agent chat
 ```
 
-#### YAML Example
-```yaml
-theme: monokai
-history_file: my_history.log
-panel_border_style: bold magenta
-table_header_style: bold blue
-spinner_type: line
-live_refresh_per_second: 5
-verbose: true
+### Quick Example
+
+Initialize the configuration and templates:
+
+```sh
+poetry run python zap/main.py --init-config --force
+poetry run python zap/main.py --init-templates --force
 ```
 
-#### TOML Example
-```toml
-theme = "monokai"
-history_file = "my_history.log"
-panel_border_style = "bold magenta"
-table_header_style = "bold blue"
-spinner_type = "line"
-live_refresh_per_second = 5
-verbose = true
+## Core Concepts
+
+### Agent Management
+
+Zap allows for managing multiple agents to perform various tasks. Agents can be chat agents, file-based agents, or custom agents tailored to specific needs.
+
+### Contexts
+
+Agents operate within contexts which store the state and history of interactions.
+
+### Command Interface
+
+Agents respond to commands and user inputs, making it easy to extend functionality through custom commands and interactions.
+
+## Examples and Use Cases
+
+### Running a Chat Agent
+
+Start a chat agent to interactively respond to user inputs:
+
+```sh
+poetry run python zap/main.py --agent chat
 ```
 
-### Usage Example
+### Performing Tasks
 
-Here’s a quick example of how to use ZAP's CLIUX with a sample configuration:
+Configure an agent to perform a series of tasks:
+
+```sh
+poetry run python zap/main.py --tasks "task1" "task2" --agent chat
+```
+
+### Custom Agent Configuration
+
+Specify a custom template directory and agent configuration:
+
+```sh
+poetry run python zap/main.py --templates-dir "/path/to/templates" --agent custom_agent
+```
+
+## Component Guide
+
+### ZapApp
+
+Handles the lifecycle and management of agents within the application.
+
+#### Practical Example
 
 ```python
-import asyncio
-from zap.cliux import UI
+from zap.app import ZapApp
 
-config = {
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
-    "verbose": True
-}
-
-ui = UI(config)
-
-async def main():
-    ui.panel("Welcome to ZAP CLIUX Demo", title="Hello")
-    
-    with ui.spinner("Processing data"):
-        await asyncio.sleep(2)
-    
-    ui.info("Data processing complete")
-    
-    table_data = [
-        {"Name": "Alice", "Age": "25", "Role": "Engineer"},
-        {"Name": "Bob", "Age": "30", "Role": "Designer"},
-        {"Name": "Charlie", "Age": "35", "Role": "Manager"}
-    ]
-    ui.display_table("Employee Data", table_data)
-    
-    code = "print('Hello, World!')"
-    ui.syntax_highlight(code, "python")
-
-    ui.tree([
-        "/home/user/documents", 
-        "/home/user/downloads", 
-        "/home/user/pictures"
-    ])
-
-    with ui.live_output("Processing...") as live:
-        for i in range(10):
-            live.update(f"Updating live output: {i}")
-            await asyncio.sleep(0.5)
-
-    await ui.export_async("output.html", "html")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+app = ZapApp()
+await app.initialize(args)
+await app.run()
 ```
 
-## Core Methods
+### ChatAgent
 
-- **input_async(prompt):** Asynchronous user input.
-- **print(
-args, 
+A specific type of agent designed to handle interactive chat-based interactions.
 
-kwargs):** Print messages to the console.
-- **debug(message):** Print a debug message.
-- **info(message):** Print an info message.
-- **warning(message):** Print a warning message.
-- **error(message):** Print an error message.
-- **exception(e, message):** Print an exception message.
-- **panel(content, title):** Display content in a panel.
-- **table(title, columns, rows):** Display a table.
-- **display_table(title, data):** Display data in a table format.
-- **spinner(message):** Display a spinner with a message.
-- **progress(total):** Show a progress bar.
-- **data_view(data, methods, title):** Detailed data view.
-- **syntax_highlight(code, language, line_numbers):** Display syntax-highlighted code.
-- **tree(paths):** Show a tree view of file paths.
-- **live_output(content):** Display live output.
-- **markdown(md_string):** Render markdown content.
-- **log_input(input_str):** Log user input.
-- **export_html(filename):** Export console output to HTML.
-- **export_svg(filename):** Export console output to SVG.
-- **export_text(filename):** Export console output to a text file.
-- **export_async(filename, fmt):** Export console output asynchronously.
+#### Practical Example
 
-## Agents
+```python
+from zap.agents.base import ChatAgent
 
-Configure ZAP agents using YAML files, each with unique capabilities and configurations.
+chat_agent = ChatAgent(config, state, ui)
+response = await chat_agent.process("Hello, Zap!", context, template_context)
+print(response.content)
+```
 
-### Example Agent Configuration
+### Agent Manager
 
-#### Echo Agent
+Manages multiple agents, allowing for easy switching and management.
+
+#### Practical Example
+
+```python
+from zap.agent_manager import AgentManager
+
+agent_manager = AgentManager("/path/to/agent/templates", tool_manager, ui, template_engine)
+agent = agent_manager.get_agent("chat")
+response = await agent.process("Hello, Zap!", context, template_context)
+print(response.content)
+```
+
+## Configuration
+
+### Agent Configuration File
+
+Configuration for agents is stored in YAML files within the templates directory.
+
+#### Example Configuration for a Chat Agent
+
 ```yaml
-name: echo
-type: EchoAgent
-system_prompt: prompts/chat/system.j2
+name: chat
+model: openai
+parameters:
+  temperature: 0.7
+  max_tokens: 150
 ```
 
-## Command System
+### Environment Variables
 
-ZAP supports a diverse array of commands for handling development workflows, file context management, and more.
+Configure API keys and other sensitive data through environment variables.
 
-### Example Commands
+#### Example
 
-- **add:** Add files to the context.
-- **remove:** Remove files from the context.
-- **diff:** Show git diff.
-- **lint:** Run linting.
-- **build:** Run build process.
-- **test:** Run tests.
-- **shell:** Execute a shell command.
-- **switch_context:** Switch to a different context.
-- **save_context:** Save the current context.
-- **list_contexts:** List all available contexts.
+```sh
+export OPENAI_API_KEY="your_openai_api_key"
+```
 
-## Contributors
+## Troubleshooting
 
-ZAP is developed and maintained by a collaborative team of developers. Contributions are welcome!
+### Common Issues
 
-## License
+#### Agent Initialization Error
 
-ZAP is licensed under the MIT License.
+**Problem**: Error initializing an agent due to missing configuration.
+
+**Solution**: Ensure you have initialized the configuration and templates:
+
+```sh
+poetry run python zap/main.py --init-config --force
+poetry run python zap/main.py --init-templates --force
+```
+
+#### Missing Dependencies
+
+**Problem**: ImportError for missing dependencies.
+
+**Solution**: Ensure all dependencies are installed by running:
+
+```sh
+poetry install
+```
+
+## Extending and Customizing
+
+### Extending Chat Agent
+
+Create a custom agent by inheriting from `ChatAgent`.
+
+#### Example
+
+```python
+from zap.agents.base import ChatAgent
+
+class CustomChatAgent(ChatAgent):
+    async def custom_process(self, user_input, context, template_context):
+        # Your custom processing logic
+        pass
+
+custom_agent = CustomChatAgent(config, state, ui)
+await custom_agent.custom_process("Hello!", context, template_context)
+```
+
+### Adding New Agent Types
+
+Extend `Agent` to define new types of agents with custom behavior.
+
+#### Example
+
+```python
+from zap.agents.base import Agent
+
+class FileAgent(Agent):
+    async def process_file(self, file_path, context, template_context):
+        # Your file processing logic
+        pass
+
+file_agent = FileAgent(config, state, ui)
+await file_agent.process_file("/path/to/file.txt", context, template_context)
+```

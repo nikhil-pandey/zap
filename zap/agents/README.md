@@ -1,83 +1,109 @@
-# Zap
+# Agent Documentation
 
-Zap is a powerful, flexible agent framework designed to enable various automated tasks. It supports agents that can chat, generate documentation, execute code, and much more. Each agent is configurable via YAML files and can utilize different tools based on the specified configuration.
+## Quick Start
 
-## Table of Contents
+Let's get started quickly with using agents in the "zap" automation tool.
 
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Loading and Managing Agents](#loading-and-managing-agents)
-  - [Processing Messages](#processing-messages)
-- [Configuration](#configuration)
-  - [Agent Configuration Files](#agent-configuration-files)
-  - [Prompt Templates](#prompt-templates)
-- [Extending Zap](#extending-zap)
+1. Clone the repository and navigate to the project directory:
+    ```sh
+    git clone <repository_url>
+    cd zap
+    ```
 
-## Installation
+2. Install dependencies using Poetry:
+    ```sh
+    poetry install
+    ```
 
-Ensure you have Python installed and then run:
+3. Run the Zap CLI with an agent:
+    ```sh
+    poetry run python -m zap.main --agent echo
+    ```
 
-```bash
-pip install -r requirements.txt
-```
+## Core Concepts
 
-## Usage
+### Agents
+Agents in zap are specialized entities designed to perform specific tasks like chatting, coding, or handling documentation. Each agent has a specific configuration that includes prompts and tools it can utilize.
 
-### Loading and Managing Agents
-
-Agents in Zap are managed through the `AgentManager`. This class loads agent configurations from a specified directory.
-
-```python
-from pathlib import Path
-from zap.agent_manager import AgentManager
-from zap.tools.tool_manager import ToolManager
-from zap.cliux import UIInterface
-from zap.templating import ZapTemplateEngine
-
-# Initialize required components
-config_dir = Path('./path_to_your_config_directory')
-ui = UIInterface()
-engine = ZapTemplateEngine()
-tool_manager = ToolManager()
-
-# Load agent manager
-agent_manager = AgentManager(config_dir, tool_manager, ui, engine)
-
-# List available agents
-print(agent_manager.list_agents())
-
-# Get a specific agent
-agent = agent_manager.get_agent('code')
-```
-
-### Processing Messages
-
-Once an agent is obtained, you can process messages using the `process` method.
-
-```python
-from zap.contexts.context import Context
-
-# Create a context (this would be your actual context)
-context = Context(messages=[])
-
-# Define a template context
-template_context = {}
-
-# Process a message
-result = await agent.process("Generate documentation for my code.", context, template_context)
-
-print(result.content)
-```
-
-## Configuration
-
-### Agent Configuration Files
-
-Agents are configured via YAML files placed in the configuration directory. Below are examples of different agent configurations:
-
-#### `code_agent.yaml`
+#### Example: Running an Echo Agent
+This agent simply echoes back what is inputted.
 
 ```yaml
+# zap/templates/agents/echo_agent.yaml
+name: echo
+type: EchoAgent
+system_prompt: prompts/chat/system.j2
+user_prompt: null
+```
+
+```sh
+poetry run python -m zap.main --agent echo
+```
+
+Input:
+```plaintext
+Hello!
+```
+
+Output:
+```plaintext
+I heard you say: Hello!
+```
+
+### Tools
+Tools are functional units that agents use to perform actions like reading or writing files, building projects, etc.
+
+#### Example Tool: ReadFileTool
+```py
+class ReadFileTool(Tool):
+    async def execute(self, filename: str):
+        # Implementation here
+```
+
+### Templates
+Templates structure the agent's prompts. They guide how agents should generate their output and interact with tools.
+
+#### Example Template: prompts/code/system.j2
+```j2
+You are an expert coding agent tasked with implementing changes in a software project.
+```
+
+## Examples and Use Cases
+
+### Example 1: Running a Chat Agent
+A chat agent helps in simulating a conversational interface.
+
+#### Configuration File:
+```yaml
+# zap/templates/agents/chat_agent.yaml
+name: chat
+type: ChatAgent
+system_prompt: prompts/chat/system.j2
+user_prompt: null
+```
+
+#### Running the Chat Agent:
+```sh
+poetry run python -m zap.main --agent chat
+```
+
+#### Interaction:
+Input:
+```plaintext
+How are you?
+```
+
+Expected Output:
+```plaintext
+I am just a program, but I'm functioning as expected!
+```
+
+### Example 2: Handling File Operations with a Code Agent
+A code agent designed to handle file operations like reading, writing, and more.
+
+#### Configuration File:
+```yaml
+# zap/templates/agents/code_agent.yaml
 name: code
 type: CodeAgent
 system_prompt: prompts/code/system.j2
@@ -86,80 +112,119 @@ tools:
   - read_file
   - write_file
   - list_files
-  - delete_file
-  - build_project
-  - lint_project
-  - run_tests
 ```
 
-#### `chat_agent.yaml`
-
-```yaml
-name: chat
-type: ChatAgent
-system_prompt: prompts/chat/system.j2
+#### Running the Code Agent:
+```sh
+poetry run python -m zap.main --agent code
 ```
 
-### Prompt Templates
-
-Prompt templates are defined using Jinja2 templates and are rendered based on the agent’s context and input. These templates define the behavior and response style of the agents.
-
-#### Example: `system.j2` for CodeAgent
-
-```j2
-You are a documentation generator that creates clear, concise, and accurate documentation for code and APIs.
+#### Operations:
+Command to list files:
+```plaintext
+list_files directory=.
 ```
 
-#### Example: `system.j2` for ChatAgent
-
-```j2
-You are a helpful chat assistant.
+Expected Output:
+```json
+{
+  "status": "success",
+  "result": ["file1.py", "file2.py", ...]
+}
 ```
 
-## Extending Zap
+## Component Guide
 
-To add a new agent to Zap:
+### AgentConfig
+Data structure holding configuration details for an agent.
 
-1. **Create a New Agent Class:**
-   Inherit from `Agent` or an existing agent type and implement any required methods.
+#### Example:
+```py
+from zap.agents.agent_config import AgentConfig
 
-   ```python
-   from zap.agents.base import Agent
+config = AgentConfig(
+    name="custom_agent",
+    type="CustomAgent",
+    system_prompt="prompts/custom/system.j2"
+)
+```
 
-   class CustomAgent(Agent):
-       async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
-           # Implement custom processing logic
-           pass
-   ```
+### ToolManager
+Manages the registration and execution of tools.
 
-2. **Add a YAML Configuration:**
-   Add a configuration file in the configuration directory for your new agent.
+#### Example:
+```py
+from zap.tools.tool_manager import ToolManager
+from zap.tools.basic_tools import ReadFileTool
 
-   ```yaml
-   name: custom
-type: CustomAgent
-system_prompt: prompts/custom/system.j2
-   ```
+tool_manager = ToolManager()
+tool_manager.register_tool(ReadFileTool(app_state))
+```
 
-3. **Update AgentManager (if required):**
-   Ensure that `AgentManager` can recognize and load your new agent type.
+## Extending Functionality
 
-   ```python
-   import yaml
-   from pathlib import Path
-   from zap.agents import *
+### Adding a New Agent
 
-   class AgentManager:
-       # ...
+1. **Create configuration YAML for the agent.**
+    ```yaml
+    # zap/templates/agents/new_agent.yaml
+    name: new_agent
+type: NewAgent
+    system_prompt: prompts/new_agent/system.j2
+    user_prompt: prompts/new_agent/user.j2
+tools:
+      - read_file
+      - write_file
+    ```
 
-       def load_agents(self, config_dir: Path):
-           for config_file in config_dir.glob('*.yaml'):
-               with open(config_file, 'r') as f:
-                   config_dict = yaml.safe_load(f)
-                   config = AgentConfig(**config_dict)
-                   agent_class = globals()[config.type]
-                   agent = agent_class(config, tool_manager=self.tool_manager, ui=self.ui, engine=self.engine)
-                   self.agents[config.name] = agent
-   ```
+2. **Define the agent class.**
+    ```py
+    # zap/agents/new_agent.py
+    from zap.agents.base import Agent
+    from zap.agents.agent_output import AgentOutput
+    from zap.contexts.context import Context
 
-This brief guide provides an overview on how to get started with Zap, configure agents, and extend the framework by adding custom agents. For further details, explore the code and provided examples.
+    class NewAgent(Agent):
+        async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput {
+            custom_message = f"Processing: {message}"
+            message_history = [
+                {"role": "user", "content": message},
+                {"role": "assistant", "content": custom_message}
+            ]
+            return AgentOutput(content=custom_message, message_history=message_history)
+    ```
+
+3. **Register the agent.**
+    ```py
+    # Update the __init__.py in the agents module
+    from .new_agent import NewAgent
+    ```
+
+### Adding a New Tool
+
+1. **Define the tool class.**
+    ```py
+    # zap/tools/new_tool.py
+    from zap.tools.tool import Tool
+
+    class NewTool(Tool):
+        async def execute(self, *args, **kwargs):
+            return "Tool executed"
+    ```
+
+2. **Register the tool.**
+    ```py
+    # Add to zap/tools/basic_tools.py
+    def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterface):
+        tool_manager.register_tool(NewTool())
+    ```
+
+## Performance Tips
+
+- Minimize tool calls by batching operations.
+- Utilize asynchronous execution for tasks that involve I/O operations.
+- Regularly review and optimize agent configurations for efficiency.
+
+---
+
+**END**

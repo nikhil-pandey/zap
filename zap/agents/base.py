@@ -103,12 +103,14 @@ class Agent(ABC):
     async def handle_tool_calls(self, round: int, tool_calls: any) -> list[dict[str, any]]:
         tool_responses = []
         for tool_call in tool_calls:
+            self.ui.debug(f"Round {round}: Calling tool {tool_call.function.name} with args {tool_call.function.arguments}")
             function_name = tool_call.function.name
             function_args_str = tool_call.function.arguments
             try:
                 tool = self.tool_manager.get_tool(function_name)
                 function_args = json.loads(function_args_str)
                 response = await tool.execute(**function_args)
+                self.ui.debug(f"Tool {function_name} response: {response}")
             except json.JSONDecodeError as e:
                 self.ui.exception(
                     e,

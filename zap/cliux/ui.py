@@ -91,6 +91,14 @@ class UI(UIInterface):
         """
         return self.console.input(prompt)
 
+    def raw(self, obj: any):
+        """
+        Print the raw object.
+
+        :param obj: Object to print.
+        """
+        self.console.print(obj)
+
     def print(self, *args, **kwargs):
         """
         Print to the console.

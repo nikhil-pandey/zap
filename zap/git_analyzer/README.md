@@ -1,310 +1,239 @@
-# ZAP
+# Zap Git Analyzer Agents
 
-ZAP is an extensive framework designed for creating and managing agents with various capabilities. It provides a rich command-line user interface (CLIUX) powered by the `rich` library to enhance console outputs and interactivity, facilitating seamless development workflows.
+## Quick Start
 
-## Features
+To use Zap Agents for analyzing Git repositories and managing tasks:
 
-### Framework Components
-- **Agents:** Modular agent classes like `ChatAgent`, `CodeAgent`, `EchoAgent`, and `GitAnalyzer`.
-- **Commands:** System for managing commands such as file context management, git operations, and utility commands.
-- **UI System (CLIUX):** Advanced UI features utilizing `rich` for enhanced console outputs.
-- **Configuration:** Flexible system supporting JSON, YAML, and TOML formats.
+1. **Install Dependencies:**
 
-### CLIUX Features
-- **Rich Console Output:** Syntax highlighting, panels, tables, and more.
-- **Interactive Prompts:** Asynchronous user input handling.
-- **Input Logging:** Log inputs to a history file.
-- **Exporting:** Export console output to HTML, SVG, or text.
-- **Progress Indicators:** Spinners and progress bars.
-- **Markdown Rendering:** Display markdown content.
-- **File Tree Visualization:** Display file and directory structures.
-- **Customizable Configuration:** Easily configured via dictionaries or files (JSON, YAML, TOML).
+   Ensure you have Python 3.11 or later. Then, install dependencies using Poetry:
 
-### Agent Types
-- **ChatAgent:** Assists in chat-based interaction.
-- **CodeAgent:** Helps with code-related tasks like reading, writing, and analyzing code.
-- **EchoAgent:** Simply echoes back the input message.
-- **GitAnalyzer:** Analyzes Git repositories, extracting useful metrics and information about the repository structure and commit history.
+   ```sh
+   poetry install
+   ```
 
-## Getting Started
+2. **Run the Git Analyzer:**
 
-### Configuration
+   Analyze a Git repository:
 
-#### JSON Example
-```json
-{
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
-    "verbose": true
-}
+   ```sh
+   python -m zap.git_analyzer.analyze_repo
+   ```
+
+3. **Start the Main Application:**
+
+   Start the Zap CLI:
+
+   ```sh
+   python zap/main.py
+   ```
+
+## Core Concepts
+
+### GitAnalyzer Agent
+
+The `GitAnalyzer` agent is the primary class for analyzing Git repositories, including checking the structure, dependencies, and commit history.
+
+#### Example Usage
+
+```python
+from zap.git_analyzer import GitAnalyzer
+
+async def analyze_git_repo(repo_path):
+    analyzer = GitAnalyzer(path=repo_path)
+    result = await analyzer.analyze()
+    print(result)
+
+import asyncio
+asyncio.run(analyze_git_repo('/path/to/repo'))
 ```
 
-#### YAML Example
-```yaml
-theme: monokai
-history_file: my_history.log
-panel_border_style: bold magenta
-table_header_style: bold blue
-spinner_type: line
-live_refresh_per_second: 5
-verbose: true
+### GitRepo Agent
+
+The `GitRepo` agent is responsible for interfacing directly with Git repositories, providing functionalities such as refreshing repository data and checking file statuses.
+
+#### Example
+
+```python
+from zap.git_analyzer.repo.git_repo import GitRepo
+
+async def show_tracked_files(repo_path):
+    repo = GitRepo(path=repo_path)
+    files = await repo.get_tracked_files()
+    print(files)
+
+import asyncio
+asyncio.run(show_tracked_files('/path/to/repo'))
 ```
 
-#### TOML Example
-```toml
-theme = "monokai"
-history_file = "my_history.log"
-panel_border_style = "bold magenta"
-table_header_style = "bold blue"
-spinner_type = "line"
-live_refresh_per_second = 5
-verbose = true
-```
+## Examples and Use Cases
 
-### Usage Example
+### Example: Git Repository File Status
 
-Here’s a quick example of how to use ZAP's CLIUX with a sample configuration:
+Use `GitRepo` to get the status of files in a Git repository.
 
 ```python
 import asyncio
-from zap.cliux import UI
+from zap.git_analyzer.repo.git_repo import GitRepo
 
-config = {
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
-    "verbose": True
-}
+async def get_repo_status(repo_path):
+    repo = GitRepo(path=repo_path)
+    status = await repo.get_status()
+    print(status)
 
-ui = UI(config)
-
-async def main():
-    ui.panel("Welcome to ZAP CLIUX Demo", title="Hello")
-    
-    with ui.spinner("Processing data"):
-        await asyncio.sleep(2)
-    
-    ui.info("Data processing complete")
-    
-    table_data = [
-        {"Name": "Alice", "Age": "25", "Role": "Engineer"},
-        {"Name": "Bob", "Age": "30", "Role": "Designer"},
-        {"Name": "Charlie", "Age": "35", "Role": "Manager"}
-    ]
-    ui.display_table("Employee Data", table_data)
-    
-    code = "print('Hello, World!')"
-    ui.syntax_highlight(code, "python")
-
-    ui.tree([
-        "/home/user/documents", 
-        "/home/user/downloads", 
-        "/home/user/pictures"
-    ])
-
-    with ui.live_output("Processing...") as live:
-        for i in range(10):
-            live.update(f"Updating live output: {i}")
-            await asyncio.sleep(0.5)
-
-    await ui.export_async("output.html", "html")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(get_repo_status('/path/to/repo'))
 ```
 
-## Core Methods
+### Example: Retrieve Recent Commits
 
-- **input_async(prompt):** Asynchronous user input.
-- **print(args, kwargs):** Print messages to the console.
-- **debug(message):** Print a debug message.
-- **info(message):** Print an info message.
-- **warning(message):** Print a warning message.
-- **error(message):** Print an error message.
-- **exception(e, message):** Print an exception message.
-- **panel(content, title):** Display content in a panel.
-- **table(title, columns, rows):** Display a table.
-- **display_table(title, data):** Display data in a table format.
-- **spinner(message):** Display a spinner with a message.
-- **progress(total):** Show a progress bar.
-- **data_view(data, methods, title):** Detailed data view.
-- **syntax_highlight(code, language, line_numbers):** Display syntax-highlighted code.
-- **tree(paths):** Show a tree view of file paths.
-- **live_output(content):** Display live output.
-- **markdown(md_string):** Render markdown content.
-- **log_input(input_str):** Log user input.
-- **export_html(filename):** Export console output to HTML.
-- **export_svg(filename):** Export console output to SVG.
-- **export_text(filename):** Export console output to a text file.
-- **export_async(filename, fmt):** Export console output asynchronously.
+Use `GitRepo` to retrieve the last 10 commits from a repository.
 
-## Agents
+```python
+import asyncio
+from zap.git_analyzer.repo.git_repo import GitRepo
 
-Configure ZAP agents using YAML files, each with unique capabilities and configurations.
+async def get_recent_commits(repo_path):
+    repo = GitRepo(path=repo_path)
+    commits = await repo.get_recent_commits(limit=10)
+    for commit in commits:
+        print(commit)
 
-### Example Agent Configurations
-
-#### Echo Agent
-```yaml
-name: echo
-type: EchoAgent
-system_prompt: prompts/chat/system.j2
+asyncio.run(get_recent_commits('/path/to/repo'))
 ```
 
-#### Documentation Agent
-```yaml
-name: documentation
-type: ChatAgent
-system_prompt: prompts/documentation/system.j2
-tools:
-  - read_file
-  - write_file
+### Example: Perform CLI Tasks
+
+Run specific tasks via the CLI.
+
+```sh
+python zap/main.py --tasks "echo 'Hello, World!'"
 ```
 
-#### Code Agent
-```yaml
-name: code
-type: CodeAgent
-system_prompt: prompts/code/system.j2
-user_prompt: prompts/code/user.j2
-tools:
-  - read_file
-  - write_file
-  - list_files
-  - delete_file
-  - build_project
-  - lint_project
-  - run_tests
+or from a file:
+
+```sh
+python zap/main.py --tasks /path/to/tasks.txt
 ```
 
-## Command System
+## Component Guide
 
-ZAP supports a diverse array of commands for handling development workflows, file context management, and more.
+### GitAnalyzer
 
-### Example Commands
+High-level agent for repository analysis, providing a summary of structure, dependencies, and commit history.
 
-- **add:** Add files to the context.
-- **remove:** Remove files from the context.
-- **drop:** Clear all files from the context.
-- **list:** List all files in the context.
-- **diff:** Show git diff.
-- **lint:** Run linting.
-- **build:** Run build process.
-- **test:** Run tests.
-- **copy:** Copy file content to clipboard.
-- **shell:** Execute a shell command.
-- **switch_context:** Switch to a different context.
-- **list_contexts:** List all available contexts.
-- **visualize_context:** Show current context and agent.
-- **save_context:** Save the current context.
-- **load_contexts:** Load all saved contexts.
-- **list_saved:** List all saved contexts.
-- **delete_context:** Delete a context.
-- **rename_context:** Rename a context.
-- **clear_context:** Clear messages in a context.
-- **switch_agent:** Switch to a different agent in the current context.
-- **list_agents:** List all available agents.
-- **archive_context:** Archive all contexts.
-- **list_archives:** List all archived contexts.
-- **load_archived:** Load an archived context.
-- **help:** Show help information.
+#### Example
 
-## Git Analyzer
+```python
+from zap.git_analyzer import GitAnalyzer
 
-Git Analyzer is a powerful Python library for analyzing Git repositories. It provides insights into project structure, dependencies, commit history, and file changes.
+async def analyze():
+    analyzer = GitAnalyzer(path='/path/to/repo')
+    result = await analyzer.analyze()
+    print(result)
 
-### Features
-
-- Analyze project structure and dependencies
-- Examine commit history
-- Identify most and least changed files
-- Get current Git status
-- Customizable analysis depth and focus
-- Support for various configuration file formats (JSON, YAML, TOML)
-
-### Configuration
-
-Git Analyzer allows you to customize various aspects of the analysis through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `GitAnalyzerConfig` dataclass instance.
-
-#### Example Configuration
-
-##### JSON
-```json
-{
-    "commit_limit": 20,
-    "most_changed_files_limit": 15,
-    "least_changed_files_limit": 15,
-    "log_level": "DEBUG"
-}
+import asyncio
+asyncio.run(analyze())
 ```
 
-##### YAML
+### GitRepo
+
+Agent for direct interaction with Git repositories, providing file status checks, content retrieval, and commit history extraction.
+
+#### Example
+
+```python
+from zap.git_analyzer.repo.git_repo import GitRepo
+
+async def show_tracked_files(repo_path):
+    repo = GitRepo(path=repo_path)
+    files = await repo.get_tracked_files()
+    print(files)
+
+import asyncio
+asyncio.run(show_tracked_files('/path/to/repo'))
+```
+
+## Configuration
+
+Zap GitAnalyzer can be configured using various file formats such as JSON, YAML, or TOML, typically placed in `config.yaml`.
+
+### Configuration Example
+
+#### YAML Configuration File
+
 ```yaml
 commit_limit: 20
-most_changed_files_limit: 15
-least_changed_files_limit: 15
 log_level: DEBUG
 ```
 
-##### TOML
-```toml
-commit_limit = 20
-most_changed_files_limit = 15
-least_changed_files_limit = 15
-log_level = "DEBUG"
-```
-
-### Usage
-
-Here’s a basic example of how to use Git Analyzer with a custom configuration:
+#### Load Configuration
 
 ```python
-import asyncio
-from zap.git_analyzer import GitAnalyzer, GitAnalyzerConfig
+from zap.git_analyzer.config import GitAnalyzerConfig
 
-config = {
-    "commit_limit": 20,
-    "most_changed_files_limit": 15,
-    "least_changed_files_limit": 15,
-    "log_level": "DEBUG"
-}
-
-analyzer_config = GitAnalyzerConfig.from_dict(config)
-
-async def main():
-    analyzer = GitAnalyzer('/path/to/your/repo', config=analyzer_config)
-    
-    result = await analyzer.analyze()
-    
-    print(f"Number of dependencies: {len(result.project_info.dependencies)}")
-    print(f"Number of recent commits: {len(result.recent_commits)}")
-    print(f"Most changed file: {result.most_changed_files[0][0]}")
-    
-    print("Git status:")
-    for status, files in result.git_status.items():
-        print(f"  {status}: {files.join(', ')}")
-    
-    print("Most changed files:")
-    for file, count in result.most_changed_files:
-        print(f"  {file}: {count} changes")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+config = GitAnalyzerConfig.from_file('path/to/config.yaml')
+analyzer = GitAnalyzer(config=config)
 ```
 
-This example demonstrates how to set up a custom configuration, initialize the GitAnalyzer, perform an analysis, and print some results.
+## Troubleshooting
 
-## Contributors
+### Common Issues
 
-ZAP is developed and maintained by a collaborative team of developers. Contributions are welcome!
+#### Issue: Path Does Not Exist
 
-## License
+**Error Message:**
 
-ZAP is licensed under the MIT License.
+```plaintext
+Path /invalid/path does not exist
+```
+
+**Solution:**
+
+Ensure the provided path points to an existing directory.
+
+#### Issue: Invalid Requirement Format
+
+**Error Message:**
+
+```plaintext
+Invalid requirement format: xyz
+```
+
+**Solution:**
+
+Check the formatting of your `requirements.txt` file. Each dependency should follow the format of `package==version`.
+
+### Extending or Customizing Agents
+
+You can extend Zap by creating custom agents or parsers.
+
+#### Example: Custom Dependency Parser
+
+```python
+from zap.git_analyzer.parsers.base import DependencyParser
+from zap.git_analyzer.models.dependency import DependencyInfo
+from zap.git_analyzer.models.enums import Language, PackageManager
+
+class MyCustomParser(DependencyParser):
+    async def parse(self, content: str, file_path: str) -> DependencyInfo:
+        # Custom parsing logic here
+        dependencies = content.split()
+        return DependencyInfo(language=Language.PYTHON, package_manager=PackageManager.PIP, dependencies=dependencies)
+
+# Registering
+from zap.git_analyzer.parsers.factory import ParserFactory
+ParserFactory._parsers['.mydep'] = MyCustomParser
+```
+
+## Visualization: Git Analysis Flow
+
+```mermaid
+flowchart TD
+    Start --> |Initialize| A[GitRepo]
+    A --> |Refresh| B[Analyze]
+    B --> C{GitAnalyzer}
+    C --> |Process Commits| D[CommitInfo]
+    C --> |Parse Dependencies| E[DependencyInfo]
+    E --> |Build Report| F[ExplorationResult]
+    F --> End
+```

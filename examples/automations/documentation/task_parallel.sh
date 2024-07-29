@@ -1,1 +1,0 @@
-python -m zap --tasks agents.txt cliux.txt commands.txt git_analyzer.txt templating.txt --parallel --verbose

@@ -1,1 +1,1 @@
-python -m zap --tasks agents.txt cliux.txt commands.txt git_analyzer.txt templating.txt --verbose
+python -m zap --tasks agents.txt cliux.txt commands.txt git_analyzer.txt templating.txt "/archive_context DocumentationSingle" --verbose

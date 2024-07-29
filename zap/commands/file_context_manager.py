@@ -95,7 +95,7 @@ class FileContextManager:
                     text_filename.append(f" ({branch_sizes[path]} tokens)", "blue")
                 branch.add(text_filename)
 
-        self.ui.print(root)
+        self.ui.raw(root)
 
     def _get_or_create_branch(self, path: pathlib.Path, branches: dict[pathlib.Path, Tree],
                               branch_sizes: dict[pathlib.Path, int]) -> Tree:

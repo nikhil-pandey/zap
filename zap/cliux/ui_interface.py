@@ -4,6 +4,10 @@ from typing import Any
 
 class UIInterface(ABC):
     @abstractmethod
+    def raw(self, obj: any):
+        pass
+
+    @abstractmethod
     def print(self, *args, **kwargs):
         pass
 
