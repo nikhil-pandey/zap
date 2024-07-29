@@ -119,7 +119,6 @@ def set_environment_variables(args):
         print(f"AZURE_API_VERSION: {os.getenv('AZURE_API_VERSION', '')}")
         print(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')[:6]}")
         print(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')[:6]}...")
-        print(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', '')[:6]}...")
         print()
 
 

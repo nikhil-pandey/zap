@@ -1,230 +1,239 @@
-# Agent Documentation
+# Agent Submodule Documentation
 
 ## Quick Start
 
-Let's get started quickly with using agents in the "zap" automation tool.
+Here’s how you can get started with the agents submodule quickly.
 
-1. Clone the repository and navigate to the project directory:
-    ```sh
-    git clone <repository_url>
-    cd zap
-    ```
+### Example: Using the Echo Agent
 
-2. Install dependencies using Poetry:
-    ```sh
-    poetry install
-    ```
+```python
+from zap.tools.tool_manager import ToolManager
+from zap.agents.echo_agent import EchoAgent
+from zap.agents.agent_config import AgentConfig
 
-3. Run the Zap CLI with an agent:
-    ```sh
-    poetry run python -m zap.main --agent echo
-    ```
+# Initialize the ToolManager
+tool_manager = ToolManager()
+
+# Define the agent configuration
+config = AgentConfig(
+    name="echo",
+    type="EchoAgent",
+    system_prompt="You are an echo bot"
+)
+
+# Initialize the EchoAgent
+agent = EchoAgent(config, tool_manager, ui=None, engine=None)
+
+# Process a message
+response = await agent.process(message="Hello, Agent!", context=None, template_context={})
+print(response.content)
+```
+
+Expected Output:
+```
+"I heard you say: Hello, Agent!"
+```
 
 ## Core Concepts
 
-### Agents
-Agents in zap are specialized entities designed to perform specific tasks like chatting, coding, or handling documentation. Each agent has a specific configuration that includes prompts and tools it can utilize.
+### Agent Configuration
+The `AgentConfig` class allows configuring various aspects of an agent:
 
-#### Example: Running an Echo Agent
-This agent simply echoes back what is inputted.
+```python
+from zap.agents.agent_config import AgentConfig
 
-```yaml
-# zap/templates/agents/echo_agent.yaml
-name: echo
-type: EchoAgent
-system_prompt: prompts/chat/system.j2
-user_prompt: null
+config = AgentConfig(
+    name="documentation",
+    type="ChatAgent",
+    system_prompt="You are a helpful assistant",
+    tools=["read_file", "write_file"],
+    model="gpt-4o",
+    provider="azure"
+)
 ```
 
-```sh
-poetry run python -m zap.main --agent echo
-```
+### Tool Management
+Tools extend an agent's capabilities. The `ToolManager` class helps register and retrieve tools:
 
-Input:
-```plaintext
-Hello!
-```
+```python
+from zap.tools.tool_manager import ToolManager
+from zap.tools.basic_tools import ReadFileTool
+from zap.app_state import AppState
 
-Output:
-```plaintext
-I heard you say: Hello!
-```
+tool_manager = ToolManager()
+app_state = AppState()
 
-### Tools
-Tools are functional units that agents use to perform actions like reading or writing files, building projects, etc.
+# Register tools
+tool_manager.register_tool(ReadFileTool(app_state))
 
-#### Example Tool: ReadFileTool
-```py
-class ReadFileTool(Tool):
-    async def execute(self, filename: str):
-        # Implementation here
-```
-
-### Templates
-Templates structure the agent's prompts. They guide how agents should generate their output and interact with tools.
-
-#### Example Template: prompts/code/system.j2
-```j2
-You are an expert coding agent tasked with implementing changes in a software project.
+# Retrieve and use a tool
+read_file_tool = tool_manager.get_tool("read_file")
+content = await read_file_tool.execute(filename="README.md")
+print(content)
 ```
 
 ## Examples and Use Cases
 
-### Example 1: Running a Chat Agent
-A chat agent helps in simulating a conversational interface.
+### Simple Echo Agent
 
-#### Configuration File:
-```yaml
-# zap/templates/agents/chat_agent.yaml
-name: chat
-type: ChatAgent
-system_prompt: prompts/chat/system.j2
-user_prompt: null
-```
-
-#### Running the Chat Agent:
-```sh
-poetry run python -m zap.main --agent chat
-```
-
-#### Interaction:
-Input:
-```plaintext
-How are you?
-```
-
-Expected Output:
-```plaintext
-I am just a program, but I'm functioning as expected!
-```
-
-### Example 2: Handling File Operations with a Code Agent
-A code agent designed to handle file operations like reading, writing, and more.
-
-#### Configuration File:
-```yaml
-# zap/templates/agents/code_agent.yaml
-name: code
-type: CodeAgent
-system_prompt: prompts/code/system.j2
-user_prompt: prompts/code/user.j2
-tools:
-  - read_file
-  - write_file
-  - list_files
-```
-
-#### Running the Code Agent:
-```sh
-poetry run python -m zap.main --agent code
-```
-
-#### Operations:
-Command to list files:
-```plaintext
-list_files directory=.
-```
-
-Expected Output:
-```json
-{
-  "status": "success",
-  "result": ["file1.py", "file2.py", ...]
-}
-```
-
-## Component Guide
-
-### AgentConfig
-Data structure holding configuration details for an agent.
-
-#### Example:
-```py
+```python
+from zap.agents.echo_agent import EchoAgent
 from zap.agents.agent_config import AgentConfig
 
 config = AgentConfig(
-    name="custom_agent",
-    type="CustomAgent",
-    system_prompt="prompts/custom/system.j2"
+    name="echo",
+    type="EchoAgent",
+    system_prompt="You are an echo bot"
 )
+agent = EchoAgent(config, tool_manager=None, ui=None, engine=None)
+response = await agent.process(message="Hello!", context=None, template_context={})
+print(response.content)
 ```
 
-### ToolManager
-Manages the registration and execution of tools.
+Expected Output:
+```
+"I heard you say: Hello!"
+```
 
-#### Example:
-```py
+### Agent with Tools
+
+```python
+from zap.agents.agent_config import AgentConfig
 from zap.tools.tool_manager import ToolManager
-from zap.tools.basic_tools import ReadFileTool
+from zap.tools.basic_tools import ReadFileTool, WriteFileTool
+from zap.app_state import AppState
+from pathlib import Path
 
+# Instantiate the ToolManager and AppState
+app_state = AppState()
 tool_manager = ToolManager()
+
+# Register tools
 tool_manager.register_tool(ReadFileTool(app_state))
+tool_manager.register_tool(WriteFileTool(app_state))
+
+# Define agent configuration
+config = AgentConfig(
+    name="documentation",
+    type="ChatAgent",
+    system_prompt="You are a documentation bot",
+    tools=["read_file", "write_file"]
+)
+
+# Initialize and use the agent
+# Assuming ChatAgent is implemented
+agent = ChatAgent(config, tool_manager, ui=None, engine=None)
+response = await agent.process(message="Create a README.", context=None, template_context={})
+print(response.content)
 ```
 
 ## Extending Functionality
 
-### Adding a New Agent
+### Creating a Custom Agent
 
-1. **Create configuration YAML for the agent.**
-    ```yaml
-    # zap/templates/agents/new_agent.yaml
-    name: new_agent
-type: NewAgent
-    system_prompt: prompts/new_agent/system.j2
-    user_prompt: prompts/new_agent/user.j2
-tools:
-      - read_file
-      - write_file
-    ```
+You can extend the functionality by creating custom agents.
 
-2. **Define the agent class.**
-    ```py
-    # zap/agents/new_agent.py
-    from zap.agents.base import Agent
-    from zap.agents.agent_output import AgentOutput
-    from zap.contexts.context import Context
+```python
+from zap.agents.base import Agent
+from zap.agents.agent_config import AgentConfig
+from zap.agents.agent_output import AgentOutput
 
-    class NewAgent(Agent):
-        async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput {
-            custom_message = f"Processing: {message}"
-            message_history = [
-                {"role": "user", "content": message},
-                {"role": "assistant", "content": custom_message}
-            ]
-            return AgentOutput(content=custom_message, message_history=message_history)
-    ```
+class CustomAgent(Agent):
+    async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
+        custom_response = f"Custom agent response: {message}"
+        message_history = [
+            {"role": "user", "content": message},
+            {"role": "assistant", "content": custom_response}
+        ]
+        return AgentOutput(content=custom_response, message_history=message_history)
 
-3. **Register the agent.**
-    ```py
-    # Update the __init__.py in the agents module
-    from .new_agent import NewAgent
-    ```
+# Define agent configuration
+config = AgentConfig(
+    name="custom",
+    type="CustomAgent",
+    system_prompt="You are a custom bot"
+)
 
-### Adding a New Tool
+# Initialize the CustomAgent
+custom_agent = CustomAgent(config, tool_manager=None, ui=None, engine=None)
+response = await custom_agent.process(message="Hello!", context=None, template_context={})
+print(response.content)
+```
 
-1. **Define the tool class.**
-    ```py
-    # zap/tools/new_tool.py
-    from zap.tools.tool import Tool
+### Adding New Tools
 
-    class NewTool(Tool):
-        async def execute(self, *args, **kwargs):
-            return "Tool executed"
-    ```
+You can also extend the functionality by adding new tools:
 
-2. **Register the tool.**
-    ```py
-    # Add to zap/tools/basic_tools.py
-    def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterface):
-        tool_manager.register_tool(NewTool())
-    ```
+```python
+from zap.tools.tool import Tool
+from zap.tools.tool_manager import ToolManager
 
-## Performance Tips
+class CustomTool(Tool):
+    def __init__(self):
+        super().__init__(name="custom_tool", description="A custom tool")
 
-- Minimize tool calls by batching operations.
-- Utilize asynchronous execution for tasks that involve I/O operations.
-- Regularly review and optimize agent configurations for efficiency.
+    async def execute(self, *args, **kwargs):
+        return {"status": "success", "result": "Executed custom tool"}
 
----
+# Register the custom tool
+tool_manager = ToolManager()
+tool_manager.register_tool(CustomTool())
 
-**END**
+# Use the custom tool
+custom_tool = tool_manager.get_tool("custom_tool")
+result = await custom_tool.execute()
+print(result)
+```
+
+## Configuration
+
+### YAML Configuration File Example
+
+**Configuration File:**
+
+```yaml
+name: echo
+type: EchoAgent
+system_prompt: prompts/chat/system.j2
+```
+
+### Python Configuration
+
+```python
+from zap.agents.agent_config import AgentConfig
+
+config = AgentConfig(
+    name="example-agent",
+    type="CustomAgent",
+    system_prompt="custom prompt",
+    tools=["custom_tool"]
+)
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Problem:** Tool not found in tool manager.
+
+**Solution:** Ensure the tool is registered with the ToolManager before accessing it.
+
+```python
+# Ensure to register your custom tool
+tool_manager.register_tool(CustomTool())
+tool = tool_manager.get_tool("custom_tool")
+```
+
+**Problem:** Agent fails to process a message.
+
+**Solution:** Check if the agent configuration has been correctly set:
+
+```python
+# Verify Agent Configuration
+config = AgentConfig(
+    name="example-agent",
+    type="CustomAgent",
+    system_prompt="custom prompt",
+    tools=["custom_tool"]
+)
+```

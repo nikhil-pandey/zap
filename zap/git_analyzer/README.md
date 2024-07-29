@@ -1,239 +1,218 @@
-# Zap Git Analyzer Agents
+# zap Git Analyzer Documentation
 
 ## Quick Start
 
-To use Zap Agents for analyzing Git repositories and managing tasks:
+Get started with the zap Git Analyzer to perform a comprehensive exploration of a Git repository.
 
-1. **Install Dependencies:**
+1. **Set Up the Environment**: Install dependencies using Poetry.
+    ```bash
+    poetry install
+    ```
 
-   Ensure you have Python 3.11 or later. Then, install dependencies using Poetry:
+2. **Run the Analyzer**: Use the provided script to analyze your repository.
+    ```bash
+    python -m zap.git_analyzer.analyze_repo /path/to/your/git/repository
+    ```
 
-   ```sh
-   poetry install
-   ```
-
-2. **Run the Git Analyzer:**
-
-   Analyze a Git repository:
-
-   ```sh
-   python -m zap.git_analyzer.analyze_repo
-   ```
-
-3. **Start the Main Application:**
-
-   Start the Zap CLI:
-
-   ```sh
-   python zap/main.py
-   ```
+   This command will analyze the specified Git repository and print the exploration results.
 
 ## Core Concepts
 
-### GitAnalyzer Agent
+### GitRepo
 
-The `GitAnalyzer` agent is the primary class for analyzing Git repositories, including checking the structure, dependencies, and commit history.
+The `GitRepo` class interacts with the Git repository to fetch tracked files, file contents, Git status, and recent commits.
 
-#### Example Usage
+### Dependency Parsers
 
-```python
-from zap.git_analyzer import GitAnalyzer
+Parsers extract dependency information from various file types:
+- `PythonParser` for `requirements.txt` and `pyproject.toml`
+- `JavaScriptParser` for `package.json`
+- `DotNetParser` for `.csproj`
+- `PipfileParser` for `Pipfile`
 
-async def analyze_git_repo(repo_path):
-    analyzer = GitAnalyzer(path=repo_path)
-    result = await analyzer.analyze()
-    print(result)
+### RepoExplorer
 
-import asyncio
-asyncio.run(analyze_git_repo('/path/to/repo'))
-```
-
-### GitRepo Agent
-
-The `GitRepo` agent is responsible for interfacing directly with Git repositories, providing functionalities such as refreshing repository data and checking file statuses.
-
-#### Example
-
-```python
-from zap.git_analyzer.repo.git_repo import GitRepo
-
-async def show_tracked_files(repo_path):
-    repo = GitRepo(path=repo_path)
-    files = await repo.get_tracked_files()
-    print(files)
-
-import asyncio
-asyncio.run(show_tracked_files('/path/to/repo'))
-```
+The `RepoExplorer` class orchestrates the exploration of the Git repository, gathering information about the project structure, Git status, recent commits, and file change statistics.
 
 ## Examples and Use Cases
 
-### Example: Git Repository File Status
+### Analyzing a Git Repository
 
-Use `GitRepo` to get the status of files in a Git repository.
-
-```python
-import asyncio
-from zap.git_analyzer.repo.git_repo import GitRepo
-
-async def get_repo_status(repo_path):
-    repo = GitRepo(path=repo_path)
-    status = await repo.get_status()
-    print(status)
-
-asyncio.run(get_repo_status('/path/to/repo'))
-```
-
-### Example: Retrieve Recent Commits
-
-Use `GitRepo` to retrieve the last 10 commits from a repository.
+Run the following code to analyze a Python or DotNet project repository:
 
 ```python
 import asyncio
-from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.analyzer import analyze_repo
 
-async def get_recent_commits(repo_path):
-    repo = GitRepo(path=repo_path)
-    commits = await repo.get_recent_commits(limit=10)
-    for commit in commits:
-        print(commit)
+async def analyze_repo_example():
+    result = await analyze_repo("/path/to/your/repo")
+    print(result)
 
-asyncio.run(get_recent_commits('/path/to/repo'))
+asyncio.run(analyze_repo_example())
 ```
 
-### Example: Perform CLI Tasks
+### Custom Configuration
 
-Run specific tasks via the CLI.
+Create a custom configuration for the analyzer:
 
-```sh
-python zap/main.py --tasks "echo 'Hello, World!'"
-```
+1. **Configuration File (YAML)**:
+    ```yaml
+    commit_limit: 20
+    most_changed_files_limit: 15
+    least_changed_files_limit: 5
+    log_level: DEBUG
+    ```
 
-or from a file:
+2. **Load and Use Configuration**:
+    ```python
+    import asyncio
+    from zap.git_analyzer.config import GitAnalyzerConfig
+    from zap.git_analyzer.analyzer import analyze_repo
 
-```sh
-python zap/main.py --tasks /path/to/tasks.txt
-```
+    async def analyze_with_custom_config():
+        config = GitAnalyzerConfig.from_file("/path/to/config.yaml")
+        result = await analyze_repo("/path/to/repo", config)
+        print(result)
+
+    asyncio.run(analyze_with_custom_config())
+    ```
 
 ## Component Guide
 
-### GitAnalyzer
-
-High-level agent for repository analysis, providing a summary of structure, dependencies, and commit history.
-
-#### Example
-
-```python
-from zap.git_analyzer import GitAnalyzer
-
-async def analyze():
-    analyzer = GitAnalyzer(path='/path/to/repo')
-    result = await analyzer.analyze()
-    print(result)
-
-import asyncio
-asyncio.run(analyze())
-```
-
 ### GitRepo
 
-Agent for direct interaction with Git repositories, providing file status checks, content retrieval, and commit history extraction.
+**Description**: Fetch information from the Git repository.
 
-#### Example
-
+**Usage**:
 ```python
 from zap.git_analyzer.repo.git_repo import GitRepo
 
-async def show_tracked_files(repo_path):
-    repo = GitRepo(path=repo_path)
-    files = await repo.get_tracked_files()
-    print(files)
+repo = GitRepo("/path/to/repo")
 
-import asyncio
-asyncio.run(show_tracked_files('/path/to/repo'))
+async def repo_operations():
+    tracked_files = await repo.get_tracked_files()
+    content = await repo.get_file_content("README.md")
+    print(tracked_files)
+    print(content)
+
+asyncio.run(repo_operations())
+```
+
+### PythonParser
+
+**Description**: Parses dependencies from `requirements.txt` and `pyproject.toml`.
+
+**Usage**:
+```python
+from zap.git_analyzer.parsers.python import PythonParser
+
+parser = PythonParser()
+
+async def parse_python_dependencies():
+    requirements_content = '''
+    flask==2.0.1
+    requests>=2.25.1
+    '''
+    pyproject_content = '''
+    [tool.poetry.dependencies]
+    flask = "^2.0.1"
+    requests = "^2.25.1"
+    '''
+    req_result = await parser._parse_requirements(requirements_content, "requirements.txt")
+    proj_result = await parser._parse_pyproject_toml(pyproject_content, "pyproject.toml")
+    print(req_result)
+    print(proj_result)
+
+asyncio.run(parse_python_dependencies())
+```
+
+### JavaScriptParser
+
+**Description**: Parses dependencies from `package.json`.
+
+**Usage**:
+```python
+from zap.git_analyzer.parsers.javascript import JavaScriptParser
+
+parser = JavaScriptParser()
+
+async def parse_javascript_dependencies():
+    content = '''
+    {
+      "dependencies": {
+        "react": "^17.0.2"
+      },
+      "devDependencies": {
+        "webpack": "^5.24.4"
+      }
+    }
+    '''
+    result = await parser.parse(content, "package.json")
+    print(result)
+
+asyncio.run(parse_javascript_dependencies())
+```
+
+### RepoExplorer
+
+**Description**: Orchestrates the exploration of a Git repository.
+
+**Usage**:
+```python
+from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.repo.repo_explorer import RepoExplorer
+from zap.git_analyzer.config import GitAnalyzerConfig
+
+async def explore_repository():
+    git_repo = GitRepo("/path/to/repo")
+    config = GitAnalyzerConfig()
+    explorer = RepoExplorer(git_repo, config)
+    result = await explorer.explore()
+    print(result)
+
+asyncio.run(explore_repository())
 ```
 
 ## Configuration
 
-Zap GitAnalyzer can be configured using various file formats such as JSON, YAML, or TOML, typically placed in `config.yaml`.
-
-### Configuration Example
-
-#### YAML Configuration File
-
+### Example Configuration File (YAML)
 ```yaml
 commit_limit: 20
+most_changed_files_limit: 15
+least_changed_files_limit: 5
 log_level: DEBUG
 ```
 
-#### Load Configuration
-
+### Loading Configuration
 ```python
 from zap.git_analyzer.config import GitAnalyzerConfig
 
-config = GitAnalyzerConfig.from_file('path/to/config.yaml')
-analyzer = GitAnalyzer(config=config)
+config = GitAnalyzerConfig.from_file("/path/to/config.yaml")
+print(config)
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
 
-#### Issue: Path Does Not Exist
+#### Unsupported File Type
 
-**Error Message:**
-
-```plaintext
-Path /invalid/path does not exist
+**Error Message**:
+```
+ParserError: Unsupported file type: somefile.unknown
 ```
 
-**Solution:**
+**Solution**: Only attempt to parse supported file types (`requirements.txt`, `pyproject.toml`, `package.json`, `.csproj`, `Pipfile`).
 
-Ensure the provided path points to an existing directory.
+#### Invalid JSON/TOML/XML
 
-#### Issue: Invalid Requirement Format
-
-**Error Message:**
-
-```plaintext
-Invalid requirement format: xyz
+**Error Message**:
+```
+ValueError: Invalid JSON in file: package.json
+```
+or
+```
+ValueError: Invalid TOML in file: pyproject.toml
 ```
 
-**Solution:**
-
-Check the formatting of your `requirements.txt` file. Each dependency should follow the format of `package==version`.
-
-### Extending or Customizing Agents
-
-You can extend Zap by creating custom agents or parsers.
-
-#### Example: Custom Dependency Parser
-
-```python
-from zap.git_analyzer.parsers.base import DependencyParser
-from zap.git_analyzer.models.dependency import DependencyInfo
-from zap.git_analyzer.models.enums import Language, PackageManager
-
-class MyCustomParser(DependencyParser):
-    async def parse(self, content: str, file_path: str) -> DependencyInfo:
-        # Custom parsing logic here
-        dependencies = content.split()
-        return DependencyInfo(language=Language.PYTHON, package_manager=PackageManager.PIP, dependencies=dependencies)
-
-# Registering
-from zap.git_analyzer.parsers.factory import ParserFactory
-ParserFactory._parsers['.mydep'] = MyCustomParser
-```
-
-## Visualization: Git Analysis Flow
-
-```mermaid
-flowchart TD
-    Start --> |Initialize| A[GitRepo]
-    A --> |Refresh| B[Analyze]
-    B --> C{GitAnalyzer}
-    C --> |Process Commits| D[CommitInfo]
-    C --> |Parse Dependencies| E[DependencyInfo]
-    E --> |Build Report| F[ExplorationResult]
-    F --> End
-```
+**Solution**: Check the file for syntax errors or structural issues.

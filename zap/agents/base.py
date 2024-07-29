@@ -1,13 +1,13 @@
 import json
 from abc import ABC
 
-from litellm import acompletion
+from litellm import acompletion, BadRequestError
 
+from zap.agents.agent_config import AgentConfig
 from zap.agents.agent_output import AgentOutput
+from zap.agents.model_capabilities import ModelCapabilities
 from zap.cliux import UIInterface
 from zap.contexts.context import Context
-from zap.agents.model_capabilities import ModelCapabilities
-from zap.agents.agent_config import AgentConfig
 from zap.exceptions import ToolExecutionError
 from zap.templating import ZapTemplateEngine
 from zap.tools.tool_manager import ToolManager
@@ -40,8 +40,11 @@ class Agent(ABC):
     async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
-        except Exception as e:
-            self.ui.exception(e, f"Failed to process message: {message}")
+        except BadRequestError as e:
+            self.ui.exception(e, f"Bad request error while processing message: {message}")
+            raise
+        except Exception as ex:
+            self.ui.exception(ex, f"Failed to process message: {message}")
             raise
 
     async def _try_process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
@@ -51,7 +54,6 @@ class Agent(ABC):
         original_message_count = len(messages)
 
         if not messages:
-            # TODO: Figure out a way to get context
             system_prompt = await self.engine.render_file(self.config.system_prompt, template_context)
             messages.append({"role": "system", "content": system_prompt})
 
@@ -75,6 +77,11 @@ class Agent(ABC):
                 tools=self.tool_schemas if self.supports_tool_calling else None,
                 tool_choice="auto" if self.supports_tool_calling else None,
                 parallel_tool_calls=self.supports_parallel_tool_calls if self.supports_tool_calling else None,
+                metadata={
+                    'agent_name': self.config.name,
+                    'agent_type': self.config.type,
+                    'context_name': context.name,
+                }
             )
 
             response_message = response.choices[0].message
@@ -103,7 +110,8 @@ class Agent(ABC):
     async def handle_tool_calls(self, round: int, tool_calls: any) -> list[dict[str, any]]:
         tool_responses = []
         for tool_call in tool_calls:
-            self.ui.debug(f"Round {round}: Calling tool {tool_call.function.name} with args {tool_call.function.arguments}")
+            self.ui.debug(
+                f"Round {round}: Calling tool {tool_call.function.name} with args {tool_call.function.arguments}")
             function_name = tool_call.function.name
             function_args_str = tool_call.function.arguments
             try:

@@ -1,69 +1,243 @@
 # Zap Templating Engine
 
-The Zap Templating Engine is a powerful tool designed for asynchronously rendering Jinja2 templates, capable of accommodating content from custom URLs and local files. It's ideal for rendering dynamic content.
+## Quick Start
 
-## Usage
-
-Begin by importing the `ZapTemplateEngine`:
+Get up and running quickly with the Zap Templating Engine.
 
 ```python
-from zap.templating import ZapTemplateEngine
+from zap.templating.engine import ZapTemplateEngine
+
+templates = {
+    "hello.txt": "Hello, {{ name }}!"
+}
+
+template_engine = ZapTemplateEngine(templates=templates)
+
+async def render_hello():
+    context = {"name": "World"}
+    print(await template_engine.render_file("hello.txt", context))
+
+import asyncio
+asyncio.run(render_hello())
 ```
 
-## Key Features
+## Core Concepts
+
+### Template Loading
+
+Load templates from a dictionary or a directory.
+
+**From a dictionary:**
+
+```python
+templates = {
+    "template1.txt": "This is template 1",
+}
+template_engine = ZapTemplateEngine(templates=templates)
+```
+
+**From a directory:**
+
+```python
+template_engine = ZapTemplateEngine(templates_dir="path/to/templates")
+```
 
 ### Rendering Templates
-Render templates using the `render` method inside the `ZapTemplateEngine` class. Here's a simple example:
+
+Templates can be rendered from strings or files.
+
+**Render from string:**
 
 ```python
-engine = ZapTemplateEngine()
-template = "Hello, {{ name }}!"
-context = {"name": "World"}
-result = await engine.render(template, context)
-print(result) # Outputs: "Hello, World!"
-```
+async def render_from_string():
+    result = await template_engine.render("Hi {{ name }}", {"name": "Alice"})
+    print(result)
 
-### Including File Content
-Leverage the `i` function in your templates to insert content from local files:
-
-```python
-engine = ZapTemplateEngine()
-template = "The content is: {{ i('/path/to/your/file.txt') }}"
-result = await engine.render(template)
-# Outputs the content of "/path/to/your/file.txt".
-```
-
-### Including URL Content
-Use the same `i` function to include content from a URL:
-
-```python
-engine = ZapTemplateEngine()
-template = "The content is: {{ i('https://example.com') }}"
-result = await engine.render(template)
-# Outputs the content of "https://example.com".
-```
-
-### Utilizing Custom Path Resolvers
-By extending the `PathResolver` class, you can create a custom path resolver. You'll need to implement the `resolve_file` and `resolve_http` async methods:
-
-```python
 import asyncio
-from zap.templating import ZapTemplateEngine
-from custom_resolver import CustomPathResolver
-
-custom_resolver = CustomPathResolver('/custom/base/path')
-engine = ZapTemplateEngine(resolver=custom_resolver)
-template = "The content is: {{ i('custom_file.txt') }}"
-result = await engine.render(template)
-print(result) # Outputs content of "custom_file.txt" using "/custom/base/path" as the base path.
+asyncio.run(render_from_string())
 ```
 
-## Testing
+**Render from file:**
 
-Confirm the engine's functionality by running the test cases:
+```python
+async def render_from_file():
+    result = await template_engine.render_file("template1.txt", {"name": "Bob"})
+    print(result)
 
-```sh
-poetry run pytest
+import asyncio
+asyncio.run(render_from_file())
 ```
 
-For more comprehensive usage examples and advanced use cases, please consult the API documentation.
+### Including External Content
+
+Include content from files or URLs.
+
+```python
+templates = {
+    "index.html": "{% async %}{{ i('https://example.com') }}{% endasync %}"
+}
+
+template_engine = ZapTemplateEngine(templates=templates)
+
+async def render_template():
+    result = await template_engine.render_file("index.html")
+    print(result)
+
+import asyncio
+asyncio.run(render_template())
+```
+
+## Examples and Use Cases
+
+### Dynamic Context
+
+```python
+templates = {
+    "welcome.txt": "Welcome, {{ user.name }}!"
+}
+
+template_engine = ZapTemplateEngine(templates=templates)
+
+async def render_welcome():
+    context = {"user": {"name": "Charlie"}}
+    print(await template_engine.render_file("welcome.txt", context))
+
+import asyncio
+asyncio.run(render_welcome())
+```
+
+### Directory-based Templates
+
+Given the directory structure:
+
+```
+/templates
+    |-- greeting.txt
+    |-- farewell.txt
+```
+
+**Load and Render:**
+
+```python
+template_engine = ZapTemplateEngine(templates_dir="path/to/templates")
+
+async def render_greeting():
+    context = {"name": "Dana"}
+    print(await template_engine.render_file("greeting.txt", context))
+
+import asyncio
+asyncio.run(render_greeting())
+```
+
+### Fetching Remote Content
+
+Use the URL resolver to include remote content.
+
+```python
+templates = {
+    "remote.html": "{% async %}{{ i('https://example.com/data') }}{% endasync %}"
+}
+
+template_engine = ZapTemplateEngine(templates=templates)
+
+async def render_remote():
+    print(await template_engine.render_file("remote.html"))
+
+import asyncio
+asyncio.run(render_remote())
+```
+
+## Component Guide
+
+### `ZapTemplateEngine`
+
+The core component of the templating system, providing capabilities to render templates from strings and files, as well as include external content.
+
+**Example Usage:**
+
+```python
+template_engine = ZapTemplateEngine(templates={"sample.txt": "Hello, {{ user }}!"})
+
+async def render_sample():
+    print(await template_engine.render_file("sample.txt", {"user": "Dave"}))
+
+import asyncio
+asyncio.run(render_sample())
+```
+
+**Best Practices:**
+- Ensure context includes all necessary variables.
+- Use directory-based template loading for large projects.
+
+### `PathResolver`
+
+Base class for custom path resolvers. Implement `resolve_file` and `resolve_http`.
+
+### `DefaultPathResolver`
+
+Resolves paths using the local filesystem and HTTP requests.
+
+## Configuration
+
+### Options
+
+- `templates`: Dictionary of templates.
+- `root_path`: Root directory for template resolution.
+- `resolver`: Custom PathResolver instance.
+- `templates_dir`: Directory containing templates.
+
+**Example:**
+
+```python
+template_engine = ZapTemplateEngine(
+    templates={"greet.txt": "Hi, {{ name }}!"},
+    root_path="/my/root/path",
+    resolver=CustomPathResolver(),
+    templates_dir="/path/to/templates"
+)
+```
+
+## Troubleshooting
+
+### Template Not Found
+
+**Error:**
+
+`jinja2.exceptions.TemplateNotFound: <template_name>`
+
+**Solution:**
+
+Ensure template name is correct and exists.
+
+### Invalid URL
+
+**Error:**
+
+`aiohttp.ClientResponseError: 404, message='Not Found'`
+
+**Solution:**
+
+Ensure URL is correct and accessible.
+
+## Extending and Customizing
+
+### Custom Path Resolver
+
+Create a custom path resolver by inheriting `PathResolver`.
+
+**Example:**
+
+```python
+from zap.templating.resolver import PathResolver
+
+class CustomPathResolver(PathResolver):
+    async def resolve_file(self, path: str) -> str:
+        # Custom file resolution logic
+        pass
+
+    async def resolve_http(self, url: str) -> str:
+        # Custom HTTP resolution logic
+        pass
+
+template_engine = ZapTemplateEngine(resolver=CustomPathResolver())
+```

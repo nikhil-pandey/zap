@@ -1,227 +1,213 @@
-# Zap Agents Documentation
+# `zap.commands` Documentation
 
 ## Quick Start
 
-### Getting Started with Agents
+### 1. Setup
 
-1. **Installation**:
+To use the `zap.commands` submodule, ensure you have Python 3.11+, Poetry, and all necessary dependencies installed. Begin with:
 
-   Ensure you have Python version `>=3.11,<3.13` installed. Navigate to the project's root directory and install the dependencies using Poetry:
+```bash
+git clone <repository_url>
+cd zapfinal
+poetry install
+```
 
-   ```sh
-   poetry install
-   ```
+### 2. Utilizing Commands
 
-2. **Running an Agent**:
+Here’s a quick example of how to add files to the context using the `Commands` class:
 
-   You can start the application and utilize agents by running the main script:
+```python
+from zap.commands import Commands
+from zap.config import AppConfig
+from zap.app_state import AppState
+from zap.cliux import UIInterface
+from zap.contexts.context_manager import ContextManager
+from zap.agent_manager import AgentManager
 
-   ```sh
-   poetry run python zap/main.py
-   ```
+# Initialize necessary components
+config = AppConfig()
+state = AppState()
+ui = UIInterface()
+context_manager = ContextManager()
+agent_manager = AgentManager()
 
-### Example Usage
+# Initialize Context Command Manager (ccm)
+ccm = ContextCommandManager(context_manager, ui, agent_manager)
 
-#### Switching Agents and Listing Available Agents
+# Initialize Commands
+commands = Commands(config, state, ui, ccm, agent_manager)
 
-```sh
-# Switch to a different agent
-poetry run python zap/main.py /switch_agent ExampleAgent
-
-# List all available agents
-poetry run python zap/main.py /list_agents
+# Run `add` command
+await commands.run_command('/add path/to/file')
 ```
 
 ## Core Concepts
 
-### Agent
+### Command Registration
 
-An agent is a core component that processes user inputs using a defined behavior.
+Commands are registered within the `Commands` class using the `CommandRegistry`. Example:
 
-#### Example
-
-```py
-from zap.agents.base import ChatAgent
-
-class ExampleAgent(ChatAgent):
-    async def process(self, input_text, context, template_context):
-        # Perform processing
-        response = "Processed: " + input_text
-        return response
+```python
+def _register_commands(self):
+    self.registry.command(
+        "add", aliases=["a"], description="Add files to the context"
+    )(self.file_manager.add)
 ```
 
-### Context Command Manager
+### File Context Management
 
-Manages context-related commands including switching agents.
+**Adding Files**
 
-#### Example
+Adds specified files to the current context.
+```python
+await commands.run_command('/add path/to/file1 path/to/file2')
+```
 
-```py
-from zap.contexts.context_command_manager import ContextCommandManager
+**Clearing All Files**
 
-ccm = ContextCommandManager(context_manager, ui, agent_manager)
-
-await ccm.switch_agent('ExampleAgent')
-await ccm.list_agents()
+Clears all files from the current context.
+```python
+await commands.run_command('/drop')
 ```
 
 ## Examples and Use Cases
 
-### Common Scenarios
+### Example 1: Copy All Context Files to Clipboard
 
-#### Switching and Listing Agents
-
-Switching agents allows you to change the behavior of the system dynamically.
-
-```py
-from zap.contexts.context_command_manager import ContextCommandManager
-
-# Assuming context_manager, ui, and agent_manager are already defined
-ccm = ContextCommandManager(context_manager, ui, agent_manager)
-
-# Switch to specified agent
-await ccm.switch_agent('ExampleAgent')
-
-# List all available agents
-await ccm.list_agents()
+```python
+await commands.run_command('/copy')
 ```
 
-### Chatting with an Agent
+Copies the contents of all files in the context to the clipboard.
 
-Use the main application loop to interact with a chat agent.
+### Example 2: Running Shell Commands
 
-```py
-from zap.app import ZapApp
-
-# Initialize and run the application
-app = ZapApp()
-
-# In a real scenario, arguments might be parsed via the command line
-args = parse_arguments()  
-await app.initialize(args)
-
-while True:
-    # Simulation of user input (this would be collected from the user in real use)
-    user_input = "/switch_agent ExampleAgent"
-    await app.handle_input(user_input)
+```python
+await commands.run_command('/shell "ls -la"')
 ```
+Executes a shell command.
+
+### Example 3: Git Integration - Diff
+
+```python
+await commands.run_command('/diff')
+```
+Shows the git diff of the repository.
 
 ## Component Guide
 
-### ContextCommandManager
+### `AdvancedInput`
+Prompts for input with advanced completions using the `PromptSession` from `prompt_toolkit`.
 
-**Description**: Manages commands related to switching and handling agent contexts.
-
-**Usage**:
-
-```py
-ccm = ContextCommandManager(context_manager, ui, agent_manager)
-
-# Switch context and agent
-await ccm.switch_context("NewContext")
-await ccm.switch_agent("ExampleAgent")
-
-# List contexts and agents
-await ccm.list_contexts()
-await ccm.list_agents()
+Example:
+```python
+advanced_input = AdvancedInput(registry, state, ui)
+output = await advanced_input.input_async(prompt="> ")
 ```
 
-### ChatAgent
+### `UtilityCommands`
 
-**Description**: Base class for creating custom chat agents.
+- **copy_to_clipboard**: Copies the content of all files in the context to the clipboard.
+- **shell**: Executes a given shell command.
 
-**Usage**:
+Example:
+```python
+utility = UtilityCommands(state, ui)
+await utility.shell("echo 'Hello World'")
+```
 
-```py
-class YourCustomAgent(ChatAgent):
-    async def process(self, input_text, context, template_context):
-        return "Custom response"
-        
-# Register and switch to your custom agent
-agent_manager.register_agent("YourCustomAgent", YourCustomAgent)
-await ccm.switch_agent("YourCustomAgent")
+### `DevelopmentWorkflow`
+
+Manages tasks for the development workflow such as linting, building, and testing.
+
+Example:
+```python
+dev_workflow = DevelopmentWorkflow(config, ui)
+await dev_workflow.lint()
+await dev_workflow.build()
+await dev_workflow.test()
+```
+
+### `FileContextManager`
+
+Manages files within the project context.
+
+Example:
+```python
+file_manager = FileContextManager(state, ui)
+await file_manager.add("file1.py", "folder/")
+await file_manager.remove("file1.py")
+await file_manager.clear()
+await file_manager.list()
 ```
 
 ## Configuration
 
-### Environment Variables
+### Sample Configuration (`pyproject.toml`)
 
-Ensure necessary API keys and environment variables are set for agent functionality.
-
-```sh
-export OPENAI_API_KEY=your_api_key
-export ANTHROPIC_API_KEY=your_api_key
-```
-
-### Example Configuration (`pyproject.toml`)
-
-Configure the package and dependencies:
+Example configuration for setting up your project:
 
 ```toml
 [tool.poetry]
 name = "zap"
 version = "0.1.0"
-...
+description = ""
+authors = ["Nikhil Pandey <nikhil@nikhil.com.np>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.11,<3.13"
-...
+flake8 = "^7.1.0"
+pyyaml = "^6.0.1"
+# ... other dependencies
 ```
 
 ## Troubleshooting
 
-### Common Issues
+### Problem: Not Enough Arguments for Command
 
-**Problem**: Unknown Agent
+**Error Message:**
 
-**Solution**: Ensure the agent is properly registered and available.
-
-**Example**:
-
-```sh
-poetry run python zap/main.py /list_agents
+```
+Not enough arguments for command 'add'. Expected 1, got 0.
+Usage: add <file>
 ```
 
-Verify the agent name in the list of available agents.
+**Solution:**
 
-### Example Error: Command Failed
+Provide the required arguments:
+```bash
+/add path/to/file1
+```
 
-**Solution**: Verify the command syntax and agent implementation.
+### Problem: Shell Command Failure
 
-## Extending Agents
+**Error Message:**
+```
+Shell command failed: <error details>
+```
 
-### Adding a New Agent
+**Solution:**
 
-1. **Define the Agent**:
+Ensure the command is correct and retry:
+```bash
+/shell "echo 'Hello World'"
+```
 
-   ```py
-   from zap.agents.base import ChatAgent
+## Extending or Customizing the `commands` Submodule
 
-   class MyNewAgent(ChatAgent):
-       async def process(self, input_text, context, template_context):
-           return "Response from MyNewAgent"
-   ```
+### Adding a New Command
 
-2. **Register the Agent**:
+To add a new command, register it within the `Commands` class:
 
-   ```py
-   agent_manager.register_agent("MyNewAgent", MyNewAgent)
-   ```
+```python
+self.registry.command("new_command", description="My new command")(self.my_new_command)
+```
 
-3. **Use the New Agent**:
+Implement the command logic:
 
-   ```sh
-   # Switch to the new agent
-   poetry run python zap/main.py /switch_agent MyNewAgent
-   ```
-
-### Customizing Agent Behavior
-
-Customize the processing logic in your agent's `process` method.
-
-```py
-class CustomBehaviorAgent(ChatAgent):
-    async def process(self, input_text, context, template_context):
-        # Custom behavior
-        return "Custom Behavior Response"
+```python
+async def my_new_command(self, *args):
+    # Command logic here
+    pass
 ```
