@@ -88,3 +88,7 @@ class UIInterface(ABC):
     @abstractmethod
     async def export_async(self, filename: str, fmt: str = "text"):
         pass
+
+    @abstractmethod
+    async def input_async(self, prompt: str) -> str:
+        pass

@@ -82,6 +82,15 @@ class UI(UIInterface):
         logger.addHandler(handler)
         return logger
 
+    def input_async(self, prompt: str) -> str:
+        """
+        Get user input asynchronously.
+
+        :param prompt: Prompt to display.
+        :return: User input string.
+        """
+        return self.console.input(prompt)
+
     def print(self, *args, **kwargs):
         """
         Print to the console.

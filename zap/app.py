@@ -23,6 +23,7 @@ from zap.contexts.context_manager import ContextManager
 from zap.contexts.context_command_manager import ContextCommandManager
 from zap.git_analyzer import GitAnalyzer
 from zap.templating import ZapTemplateEngine
+from zap.tools.basic_tools import register_tools
 from zap.tools.tool_manager import ToolManager
 
 
@@ -56,6 +57,7 @@ class ZapApp:
         repo_info = await self.git_analyzer.analyze()
         self.state.repo_metadata = repo_info
         self.state.git_repo = self.git_analyzer.git_repo
+        self.state.config = self.config
 
         # Initialize ContextManager and ChatAgent
         self.template_engine = ZapTemplateEngine(root_path=self.state.git_repo.root,
@@ -63,6 +65,7 @@ class ZapApp:
 
         # Initialize Commands
         self.tool_manager = ToolManager()
+        register_tools(tool_manager=self.tool_manager, app_state=self.state, ui=self.ui)
         self.agent_manager = AgentManager(
             Path(self.config.templates_dir) / "agents",
             self.tool_manager, self.ui, self.template_engine)

@@ -16,13 +16,26 @@ from zap.tools.tool_manager import ToolManager
 class Agent(ABC):
     def __init__(self, config: AgentConfig, tool_manager: ToolManager, ui: UIInterface, engine: ZapTemplateEngine):
         self.tool_manager = tool_manager
+        self.tool_schemas = []
         self.ui = ui
+        if config.tools:
+            for tool in config.tools:
+                tool_schema = self.tool_manager.get_function_schema(tool)
+                if tool_schema:
+                    self.tool_schemas.append(tool_schema)
+                else:
+                    raise ValueError(f"Tool {tool} not found in tool manager. Found: {self.tool_manager.tools.keys()}")
+            self.ui.info(f"Loaded {len(self.tool_schemas)} tool schemas")
         self.config = config
         self.engine = engine
         self.supports_tool_calling = ModelCapabilities.supports_function_calling(
             config.provider, config.model) and config.tools
+        if not self.supports_tool_calling and config.tools:
+            raise ValueError(f"Model {config.model} does not support tool calling")
         self.supports_parallel_tool_calls = ModelCapabilities.supports_parallel_function_calling(
             config.provider, config.model) and config.tools
+        if not self.supports_parallel_tool_calls and config.tools:
+            self.ui.warning(f"Model {config.model} does not support parallel tool calling")
 
     async def process(self, message: str, context: Context) -> AgentOutput:
         messages = []
@@ -51,7 +64,7 @@ class Agent(ABC):
             response = await acompletion(
                 model=self.config.model,
                 messages=messages,
-                tools=self.config.tools if self.supports_tool_calling else None,
+                tools=self.tool_schemas if self.supports_tool_calling else None,
                 tool_choice="auto" if self.supports_tool_calling else None,
                 parallel_tool_calls=self.supports_parallel_tool_calls if self.supports_tool_calling else None,
             )

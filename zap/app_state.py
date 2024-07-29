@@ -1,5 +1,6 @@
 from typing import Optional, Set
 
+from zap.config import AppConfig
 from zap.git_analyzer.models.exploration_result import ExplorationResult
 from zap.git_analyzer.repo.git_repo import GitRepo
 
@@ -10,6 +11,7 @@ class AppState:
         self.repo_metadata: Optional[ExplorationResult] = None
         self._files: Set[str] = set()
         self.git_repo: Optional[GitRepo] = None
+        self.config: Optional[AppConfig] = None
 
     def add_file(self, file: str) -> None:
         self._files.add(file)
