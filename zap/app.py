@@ -1,3 +1,4 @@
+import dataclasses
 import os
 import sys
 import time
@@ -18,6 +19,7 @@ from zap.cliux import UI
 from zap.commands import Commands
 from zap.config import AppConfig, load_config
 from zap.constants import FILE_ICONS
+from zap.contexts.agent_template_context import AgentTemplateContext
 from zap.contexts.context import Context
 from zap.contexts.context_manager import ContextManager
 from zap.contexts.context_command_manager import ContextCommandManager
@@ -172,8 +174,10 @@ class ZapApp:
             await self.chat_async(user_input, context, agent)
 
     async def chat_async(self, user_input: str, context: Context, agent: Agent):
-        rendered_input = await self.template_engine.render(user_input, {})
-        output = await agent.process(rendered_input, context)
+        template_context = await AgentTemplateContext.build(user_input, context, agent, self.state, self.config)
+        template_context_dict = dataclasses.asdict(template_context)
+        rendered_input = await self.template_engine.render(user_input, template_context_dict)
+        output = await agent.process(rendered_input, context, template_context_dict)
         self.ui.print(f"{type(agent).__name__}: {escape(output.content)}")
 
         for msg in output.message_history:

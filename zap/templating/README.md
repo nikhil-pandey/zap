@@ -1,96 +1,71 @@
 # Zap Templating Engine
 
-The Zap Templating Engine is an asynchronous, extensible templating engine designed for rendering Jinja2 templates with
-custom URL and file inclusion capabilities. This engine allows you to render templates and include content from both
-local files and URLs dynamically.
+The Zap Templating Engine is designed to asynchronously render Jinja2 templates while accommodating custom URL and local file inclusions. It's built for dynamic content rendering from both local files and URLs.
 
 ## Usage
 
-## Example Code
-
-### Simple Render
+To use the Zap Templating Engine, import the `ZapTemplateEngine`.
 
 ```python
-import asyncio
-from zap.templating.engine import ZapTemplateEngine
-
-
-async def main():
-    engine = ZapTemplateEngine()
-    template = "Hello, {{ name }}!"
-    context = {"name": "World"}
-    result = await engine.render(template, context)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+from zap.templating import ZapTemplateEngine
 ```
 
-### File Inclusion
+### Render Templates
+
+Render templates by utilizing the `render` method from `ZapTemplateEngine`.
 
 ```python
-import asyncio
-from zap.templating.engine import ZapTemplateEngine
-
-
-async def main():
-    engine = ZapTemplateEngine()
-    template = "The content is: {{ i('/path/to/your/file.txt') }}"
-    context = {}
-    result = await engine.render(template, context)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+engine = ZapTemplateEngine()
+template = "Hello, {{ name }}!"
+context = {"name": "World"}
+result = await engine.render(template, context)
+print(result)  # Outputs: "Hello, World!"
 ```
 
-### URL Inclusion
+### Include File Content
+
+Use the `i` function in your templates to include content from local files.
 
 ```python
-import asyncio
-from zap.templating.engine import ZapTemplateEngine
-
-
-async def main():
-    engine = ZapTemplateEngine()
-    template = "The content is: {{ i('https://example.com') }}"
-    context = {}
-    result = await engine.render(template, context)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+engine = ZapTemplateEngine()
+template = "The content is: {{ i('/path/to/your/file.txt') }}"
+result = await engine.render(template)
+# Outputs the content of "/path/to/your/file.txt".
 ```
 
-### Using Custom Resolver
+### Include URL Content
+
+You can also include content from a URL using the same `i` function.
+
+```python
+engine = ZapTemplateEngine()
+template = "The content is: {{ i('https://example.com') }}"
+result = await engine.render(template)
+# Outputs the content of "https://example.com".
+```
+
+### Custom Resolver Usage
+
+Create a custom resolver by extending `PathResolver` and implementing `resolve_file` and `resolve_http` asynchronous methods.
 
 ```python
 import asyncio
-from zap.templating.engine import ZapTemplateEngine
+from zap.templating import ZapTemplateEngine
 from custom_resolver import CustomPathResolver
 
-
-async def main():
-    custom_resolver = CustomPathResolver('/custom/base/path')
-    engine = ZapTemplateEngine(resolver=custom_resolver)
-    template = "The content is: {{ i('custom_file.txt') }}"
-    context = {}
-    result = await engine.render(template, context)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
+custom_resolver = CustomPathResolver('/custom/base/path')
+engine = ZapTemplateEngine(resolver=custom_resolver)
+template = "The content is: {{ i('custom_file.txt') }}"
+result = await engine.render(template)
+print(result)  # Outputs content of "custom_file.txt" using "/custom/base/path" as the base path.
 ```
 
-This setup allows you to initialize the PromptManager once and use it throughout your application. You'll need to pass the PromptManager instance to functions that require it.
-### Test Cases
+## Running Test Cases
 
-To run test cases and verify the functionality:
+Validate functionality with test cases by running:
 
 ```sh
 poetry run pytest
 ```
+
+For detailed usage examples and advanced scenarios, please refer to the API documentation.

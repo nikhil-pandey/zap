@@ -37,7 +37,7 @@ class Agent(ABC):
         if not self.supports_parallel_tool_calls and config.tools:
             self.ui.warning(f"Model {config.model} does not support parallel tool calling")
 
-    async def process(self, message: str, context: Context) -> AgentOutput:
+    async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())
@@ -45,18 +45,19 @@ class Agent(ABC):
 
         if not messages:
             # TODO: Figure out a way to get context
-            system_prompt = await self.engine.render_file(self.config.system_prompt, {})
+            system_prompt = await self.engine.render_file(self.config.system_prompt, template_context)
             messages.append({"role": "system", "content": system_prompt})
 
             if self.config.user_prompt:
-                user_prompt = await self.engine.render_file(self.config.user_prompt, {
-                    'message': message
-                })
+                user_prompt = await self.engine.render_file(self.config.user_prompt, template_context)
                 messages.append({"role": "user", "content": user_prompt})
             else:
                 messages.append({"role": "user", "content": message})
         else:
             messages.append({"role": "user", "content": message})
+
+        # print the user message
+        self.ui.debug(f"You: {message}")
 
         running = True
         round = 1
@@ -77,6 +78,17 @@ class Agent(ABC):
                 messages.append({"role": "assistant", "content": content})
                 return AgentOutput(content=content, message_history=messages[original_message_count:])
 
+            messages.append({"role": "assistant", "content": content, "tool_calls": [
+                {
+                    "id": tool.id,
+                    "type": tool.type,
+                    "function": {
+                        "name": tool.function.name,
+                        "arguments": tool.function.arguments,
+                    },
+                }
+                for tool in tool_calls
+            ]})
             tool_responses = await self.handle_tool_calls(round, tool_calls)
             round += 1
             messages.extend(tool_responses)
@@ -89,7 +101,7 @@ class Agent(ABC):
             try:
                 tool = self.tool_manager.get_tool(function_name)
                 function_args = json.loads(function_args_str)
-                response = await tool.execute(round=round, **function_args)
+                response = await tool.execute(**function_args)
             except json.JSONDecodeError as e:
                 self.ui.exception(
                     e,
