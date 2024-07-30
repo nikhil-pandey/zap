@@ -9,9 +9,11 @@ def tool_executor(func: Callable):
     async def wrapper(*args, **kwargs):
         try:
             result = await func(*args, **kwargs)
-            return json.dumps({"status": "success", "result": result})
+            return json.dumps({"result": result})
+        except json.JSONDecodeError as e:
+            return json.dumps({"error": "Failed to decode JSON arguments"})
         except Exception as e:
-            return json.dumps({"status": "error", "error": str(e)})
+            return json.dumps({"error": str(e)})
 
     return wrapper
 
@@ -22,6 +24,5 @@ class Tool(ABC):
         self.description = description
 
     @abstractmethod
-    @tool_executor
     async def execute(self, *args, **kwargs):
         pass

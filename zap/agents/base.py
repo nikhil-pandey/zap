@@ -2,14 +2,15 @@ import json
 from abc import ABC
 
 from litellm import acompletion, BadRequestError
+from rich.markup import escape
 
 from zap.agents.agent_config import AgentConfig
 from zap.agents.agent_output import AgentOutput
 from zap.agents.model_capabilities import ModelCapabilities
 from zap.cliux import UIInterface
 from zap.contexts.context import Context
-from zap.exceptions import ToolExecutionError
 from zap.templating import ZapTemplateEngine
+from zap.tools.tool import tool_executor
 from zap.tools.tool_manager import ToolManager
 
 
@@ -65,8 +66,7 @@ class Agent(ABC):
         else:
             messages.append({"role": "user", "content": message})
 
-        # print the user message
-        self.ui.debug(f"You: {message}")
+        self.ui.debug(f"You: {escape(message)}")
 
         running = True
         round = 1
@@ -78,28 +78,29 @@ class Agent(ABC):
                 tool_choice="auto" if self.supports_tool_calling else None,
                 parallel_tool_calls=self.supports_parallel_tool_calls if self.supports_tool_calling else None,
                 metadata={
-                  "generation_name": "ishaan-test-generation",
-                  "generation_id": "gen-id22",
-                  "parent_observation_id": "obs-id9",
-                  "version":  "test-generation-version",
-                  "trace_user_id": "user-id2",
-                  "session_id": "session-1",
-                  "tags": ["tag1", "tag2"],
-                  "trace_name": "new-trace-name",
-                  "trace_id": "trace-id22",
-                  "trace_metadata": {"key": "value"},
-                  "trace_version": "test-trace-version",
-                  "trace_release": "test-trace-release",
-                  "existing_trace_id": "trace-id22",
-                  "trace_metadata": {"key": "updated_trace_value"},
-                  "update_trace_keys": ["input", "output", "trace_metadata"],
-                  "debug_langfuse": True,
-              }
+                    "generation_name": "ishaan-test-generation",
+                    "generation_id": "gen-id22",
+                    "parent_observation_id": "obs-id9",
+                    "version": "test-generation-version",
+                    "trace_user_id": "user-id2",
+                    "session_id": "session-1",
+                    "tags": ["tag1", "tag2"],
+                    "trace_name": "new-trace-name",
+                    "trace_id": "trace-id22",
+                    "trace_metadata": {"key": "value"},
+                    "trace_version": "test-trace-version",
+                    "trace_release": "test-trace-release",
+                    "existing_trace_id": "trace-id22",
+                    "trace_metadata": {"key": "updated_trace_value"},
+                    "update_trace_keys": ["input", "output", "trace_metadata"],
+                    "debug_langfuse": True,
+                }
             )
 
             response_message = response.choices[0].message
             content = response_message["content"]
             tool_calls = response_message.tool_calls
+            self.ui.print(f"{self.config.type}: {escape(content)}")
 
             if tool_calls is None or len(tool_calls) == 0:
                 messages.append({"role": "assistant", "content": content})
@@ -127,24 +128,8 @@ class Agent(ABC):
                 f"Round {round}: Calling tool {tool_call.function.name} with args {tool_call.function.arguments}")
             function_name = tool_call.function.name
             function_args_str = tool_call.function.arguments
-            try:
-                tool = self.tool_manager.get_tool(function_name)
-                function_args = json.loads(function_args_str)
-                response = await tool.execute(**function_args)
-                self.ui.debug(f"Tool {function_name} response: {response}")
-            except json.JSONDecodeError as e:
-                self.ui.exception(
-                    e,
-                    f"Failed to decode JSON arguments for tool call: {function_args_str}"
-                )
-                response = json.dumps({"error": "Failed to decode JSON arguments"})
-            except ToolExecutionError as e:
-                self.ui.exception(
-                    e,
-                    f"Failed to execute tool {function_name} with args {function_args_str}"
-                )
-                response = json.dumps({"error": "Failed to execute tool"})
-
+            response = await self.handle_tool_call(function_name, function_args_str, tool_call, tool_responses)
+            self.ui.debug(f"Tool {function_name} response: {response}")
             tool_responses.append(
                 {
                     "tool_call_id": tool_call.id,
@@ -155,6 +140,12 @@ class Agent(ABC):
             )
 
         return tool_responses
+
+    @tool_executor
+    async def handle_tool_call(self, function_name, function_args_str, tool_call, tool_responses):
+        tool = self.tool_manager.get_tool(function_name)
+        function_args = json.loads(function_args_str)
+        return await tool.execute(**function_args)
 
 
 class ChatAgent(Agent):

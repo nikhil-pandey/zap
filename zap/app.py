@@ -190,7 +190,6 @@ class ZapApp:
         template_context_dict = dataclasses.asdict(template_context)
         rendered_input = await self.template_engine.render(user_input, template_context_dict)
         output = await agent.process(rendered_input, context, template_context_dict)
-        self.ui.print(f"{type(agent).__name__}: {escape(output.content)}")
 
         for msg in output.message_history:
             chat_message = ChatMessage.from_agent_output(msg, agent.config.name)

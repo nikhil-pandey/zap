@@ -1,11 +1,35 @@
-import json
 import os
+import asyncio
 from typing import Annotated
 
 from zap.app_state import AppState
 from zap.cliux import UIInterface
 from zap.tools.tool import Tool
 from zap.tools.tool_manager import ToolManager
+
+
+class ShellCommandTool(Tool):
+    def __init__(self, name: str, description: str, app_state: AppState):
+        super().__init__(name, description)
+        self.app_state = app_state
+
+    async def run_command(self, command: str) -> dict:
+        process = await asyncio.create_subprocess_shell(
+            command,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+
+        stdout_str = stdout.decode().strip()
+        stderr_str = stderr.decode().strip()
+
+        return {
+            "status": "success" if process.returncode == 0 else "failed",
+            "exit_code": process.returncode,
+            "stdout": stdout_str,
+            "stderr": stderr_str,
+        }
 
 
 class ReadFileTool(Tool):
@@ -16,10 +40,12 @@ class ReadFileTool(Tool):
     async def execute(self, filename: Annotated[str, "Path to the file to read"]):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
-            return json.dumps({"status": "error", "error": "Path is outside the repository boundary."})
+            raise ValueError("Path is outside the repository boundary.")
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"File {filename} does not exist.")
         with open(full_path, "r") as file:
             content = file.read()
-        return json.dumps({"status": "success", "result": content})
+        return {"status": "success", "content": content, "size": len(content)}
 
 
 class WriteFileTool(Tool):
@@ -32,21 +58,22 @@ class WriteFileTool(Tool):
                       content: Annotated[str, "Content to write to the file"]):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
-            return json.dumps({"status": "error", "error": "Path is outside the repository boundary."})
+            raise ValueError("Path is outside the repository boundary.")
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
         with open(full_path, "w") as file:
             file.write(content)
-        return json.dumps({"status": "success", "result": f"File {filename} written successfully."})
+        return {"status": "success", "message": f"File {filename} written successfully.", "size": len(content)}
 
 
-class BuildProjectTool(Tool):
+class BuildProjectTool(ShellCommandTool):
     def __init__(self, app_state: AppState):
-        super().__init__("build_project", "Build the project to check for errors within the repository boundary.")
-        self.app_state = app_state
+        super().__init__("build_project", "Build the project to check for errors within the repository boundary.",
+                         app_state)
 
     async def execute(self):
-        command = self.app_state.config.build_command
-        result = os.system(command)
-        return json.dumps({"status": "success", "result": "Project built successfully."})
+        result = await self.run_command(self.app_state.config.build_command)
+        result["message"] = "Project built successfully." if result["status"] == "success" else "Build failed."
+        return result
 
 
 class ListFilesTool(Tool):
@@ -58,13 +85,13 @@ class ListFilesTool(Tool):
         tracked_files: set[str] = await self.app_state.git_repo.get_tracked_files()
         full_path = os.path.join(self.app_state.git_repo.root, directory)
         if not full_path.startswith(self.app_state.git_repo.root):
-            return json.dumps({"status": "error", "error": "Path is outside the repository boundary."})
+            raise ValueError("Path is outside the repository boundary.")
         files = [
             file
             for file in tracked_files
             if file.startswith(full_path) or file.startswith(directory)
         ]
-        return json.dumps({"status": "success", "result": json.dumps(files)})
+        return {"status": "success", "files": files, "count": len(files)}
 
 
 class AskHumanHelpTool(Tool):
@@ -73,8 +100,8 @@ class AskHumanHelpTool(Tool):
         self.ui = ui
 
     async def execute(self, query: Annotated[str, "Query to ask for human help"]):
-        prompt = await self.ui.input_async(query)
-        return json.dumps({"status": "success", "result": prompt})
+        response = await self.ui.input_async(query)
+        return {"status": "success", "response": response}
 
 
 class DeleteFileTool(Tool):
@@ -85,31 +112,31 @@ class DeleteFileTool(Tool):
     async def execute(self, filename: Annotated[str, "Path to the file to delete"]):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
-            return json.dumps({"status": "error", "error": "Path is outside the repository boundary."})
+            raise ValueError("Path is outside the repository boundary.")
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"File {filename} does not exist.")
         os.remove(full_path)
-        return json.dumps({"status": "success", "result": f"File {filename} deleted successfully."})
+        return {"status": "success", "message": f"File {filename} deleted successfully."}
 
 
-class RunTestsTool(Tool):
+class RunTestsTool(ShellCommandTool):
     def __init__(self, app_state: AppState):
-        super().__init__("run_tests", "Run the project's test suite.")
-        self.app_state = app_state
+        super().__init__("run_tests", "Run the project's test suite.", app_state)
 
     async def execute(self):
-        command = self.app_state.config.test_command
-        result = os.system(command)
-        return json.dumps({"status": "success", "result": str(result)})
+        result = await self.run_command(self.app_state.config.test_command)
+        result["message"] = "Tests ran successfully." if result["status"] == "success" else "Tests failed."
+        return result
 
 
-class LintProjectTool(Tool):
+class LintProjectTool(ShellCommandTool):
     def __init__(self, app_state: AppState):
-        super().__init__("lint_project", "Lint the project code.")
-        self.app_state = app_state
+        super().__init__("lint_project", "Lint the project code.", app_state)
 
     async def execute(self):
-        command = self.app_state.config.lint_command
-        result = os.system(command)
-        return json.dumps({"status": "success", "result": "Project linted successfully."})
+        result = await self.run_command(self.app_state.config.lint_command)
+        result["message"] = "Project linted successfully." if result["status"] == "success" else "Linting failed."
+        return result
 
 
 # Tool registration
