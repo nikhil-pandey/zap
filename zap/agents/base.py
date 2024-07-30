@@ -1,8 +1,9 @@
 import json
 from abc import ABC
 
-from litellm import acompletion, BadRequestError
+from litellm import acompletion, BadRequestError, RateLimitError
 from rich.markup import escape
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 
 from zap.agents.agent_config import AgentConfig
 from zap.agents.agent_output import AgentOutput
@@ -16,11 +17,11 @@ from zap.tools.tool_manager import ToolManager
 
 class Agent(ABC):
     def __init__(
-        self,
-        config: AgentConfig,
-        tool_manager: ToolManager,
-        ui: UIInterface,
-        engine: ZapTemplateEngine,
+            self,
+            config: AgentConfig,
+            tool_manager: ToolManager,
+            ui: UIInterface,
+            engine: ZapTemplateEngine,
     ):
         self.tool_manager = tool_manager
         self.tool_schemas = []
@@ -41,7 +42,7 @@ class Agent(ABC):
         self.supports_parallel_tool_calls = True
 
     async def process(
-        self, message: str, context: Context, template_context: dict
+            self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
@@ -54,8 +55,13 @@ class Agent(ABC):
             self.ui.exception(ex, f"Failed to process message: {message}")
             raise
 
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type(RateLimitError)
+    )
     async def _try_process(
-        self, message: str, context: Context, template_context: dict
+            self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         messages = []
         for msg in context.messages:
@@ -139,6 +145,10 @@ class Agent(ABC):
                 tool_responses = await self.handle_tool_calls(round, tool_calls)
                 round += 1
                 messages.extend(tool_responses)
+
+            except RateLimitError as e:
+                self.ui.warning(f"Rate limit reached. Retrying in a moment...")
+                raise  # This will trigger the retry decorator
             except BadRequestError as e:
                 self.ui.exception(
                     e, f"Bad request error while processing message: {message}"
@@ -146,7 +156,7 @@ class Agent(ABC):
                 raise
 
     async def handle_tool_calls(
-        self, round: int, tool_calls: any
+            self, round: int, tool_calls: any
     ) -> list[dict[str, any]]:
         tool_responses = []
 
