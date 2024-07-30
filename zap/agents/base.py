@@ -72,6 +72,7 @@ class Agent(ABC):
     async def _try_process(
         self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
+        # TODO: This is probably going to be duplicate across agents, neet to refactor this
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())
@@ -102,31 +103,13 @@ class Agent(ABC):
                 response = await acompletion(
                     model=self.config.model,
                     messages=messages,
-                    tools=self.tool_schemas if self.supports_tool_calling else None,
-                    tool_choice="auto" if self.supports_tool_calling else None,
+                    tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
+                    tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
                     parallel_tool_calls=(
                         self.supports_parallel_tool_calls
                         if self.supports_tool_calling
                         else None
                     ),
-                    metadata={
-                        "generation_name": "ishaan-test-generation",
-                        "generation_id": "gen-id22",
-                        "parent_observation_id": "obs-id9",
-                        "version": "test-generation-version",
-                        "trace_user_id": "user-id2",
-                        "session_id": "session-1",
-                        "tags": ["tag1", "tag2"],
-                        "trace_name": "new-trace-name",
-                        "trace_id": "trace-id22",
-                        "trace_metadata": {"key": "value"},
-                        "trace_version": "test-trace-version",
-                        "trace_release": "test-trace-release",
-                        "existing_trace_id": "trace-id22",
-                        "trace_metadata": {"key": "updated_trace_value"},
-                        "update_trace_keys": ["input", "output", "trace_metadata"],
-                        "debug_langfuse": True,
-                    },
                 )
 
                 response_message = response.choices[0].message

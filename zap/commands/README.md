@@ -14,7 +14,7 @@ poetry install
 
 ### 2. Utilizing Commands
 
-Here’s a quick example of how to add files to the context using the `Commands` class:
+Hereï¿½s a quick example of how to add files to the context using the `Commands` class:
 
 ```python
 from zap.commands import Commands
@@ -121,10 +121,11 @@ await utility.shell("echo 'Hello World'")
 Manages tasks for the development workflow such as linting, building, and testing.
 
 Example:
+
 ```python
 dev_workflow = DevelopmentWorkflow(config, ui)
 await dev_workflow.lint()
-await dev_workflow.build()
+await dev_workflow.build(,
 await dev_workflow.test()
 ```
 

@@ -1,5 +1,5 @@
-import os
 import asyncio
+import os
 from typing import Annotated
 
 from zap.app_state import AppState
@@ -14,6 +14,8 @@ class ShellCommandTool(Tool):
         self.app_state = app_state
 
     async def run_command(self, command: str) -> dict:
+        if not command:
+            raise ValueError("Command not configured.")
         process = await asyncio.create_subprocess_shell(
             command, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
         )
@@ -56,15 +58,15 @@ class WriteFileTool(Tool):
         self.app_state = app_state
 
     async def execute(
-        self,
-        filename: Annotated[str, "Path to the file to write"],
-        content: Annotated[str, "Content to write to the file"],
+            self,
+            filename: Annotated[str, "Path to the file to write"],
+            content: Annotated[str, "Content to write to the file"],
     ):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, "w") as file:
+        with open(full_path, "w", encoding='utf-8') as file:
             file.write(content)
         return {
             "status": "success",
@@ -169,6 +171,24 @@ class LintProjectTool(ShellCommandTool):
         return result
 
 
+class RawShellCommandTool(ShellCommandTool):
+    ALLOWED_COMMANDS = [
+        "ls", "pwd", "echo", "cat", "git", "python", "pip", "poetry", "pytest", "flake8", "black"
+                                                                                          "sed", "awk", "find", "grep",
+        "sort", "uniq", "wc", "head", "tail", "touch", "cp"
+                                                       "dir", "cd", "type", "where", "set", "cls", "copy", "del",
+        "move", "ren", "mkdir", "rmdir", "xcopy",
+    ]
+
+    def __init__(self, app_state: AppState):
+        super().__init__("shell_command", "Run a raw shell command.", app_state)
+
+    async def execute(self, command: Annotated[str, "Command to run"]):
+        if not any(command.startswith(allowed_command) for allowed_command in self.ALLOWED_COMMANDS):
+            raise ValueError(f"Command not allowed. Allowed commands: {self.ALLOWED_COMMANDS}")
+        return await self.run_command(command)
+
+
 # Tool registration
 def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterface):
     tool_manager.register_tool(ReadFileTool(app_state))
@@ -179,3 +199,4 @@ def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterfa
     tool_manager.register_tool(DeleteFileTool(app_state))
     tool_manager.register_tool(RunTestsTool(app_state))
     tool_manager.register_tool(LintProjectTool(app_state))
+    tool_manager.register_tool(RawShellCommandTool(app_state))

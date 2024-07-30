@@ -8,7 +8,6 @@ from typing import Optional
 
 import tiktoken
 from rich.align import Align
-from rich.markup import escape
 from rich.panel import Panel
 from rich.text import Text
 
@@ -20,7 +19,7 @@ from zap.cliux import UI
 from zap.commands import Commands
 from zap.config import AppConfig, load_config
 from zap.constants import FILE_ICONS
-from zap.contexts.agent_template_context import AgentTemplateContext
+from zap.contexts.agent_template_context import build_agent_template_context
 from zap.contexts.context import Context
 from zap.contexts.context_manager import ContextManager
 from zap.contexts.context_command_manager import ContextCommandManager
@@ -200,14 +199,13 @@ class ZapApp:
             await self.chat_async(user_input, context, agent)
 
     async def chat_async(self, user_input: str, context: Context, agent: Agent):
-        template_context = await AgentTemplateContext.build(
-            user_input, context, agent, self.state, self.config
+        template_context = await build_agent_template_context(
+            user_input, context, agent, self.state, self.config, self.context_manager.contexts
         )
-        template_context_dict = dataclasses.asdict(template_context)
         rendered_input = await self.template_engine.render(
-            user_input, template_context_dict
+            user_input, template_context
         )
-        output = await agent.process(rendered_input, context, template_context_dict)
+        output = await agent.process(rendered_input, context, template_context)
 
         for msg in output.message_history:
             chat_message = ChatMessage.from_agent_output(msg, agent.config.name)

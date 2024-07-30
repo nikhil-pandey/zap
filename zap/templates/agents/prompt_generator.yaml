@@ -1,0 +1,4 @@
+name: promptgenerator
+type: PromptAgent
+system_prompt: prompts/prompt/system.j2
+user_prompt: prompts/prompt/user.j2
