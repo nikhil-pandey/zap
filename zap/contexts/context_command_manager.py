@@ -1,7 +1,4 @@
-from rich.table import Table
-
 from zap.agent_manager import AgentManager
-from zap.constants import FILE_ICONS
 from zap.contexts.context_manager import ContextManager
 from zap.cliux import UIInterface
 
@@ -40,7 +37,11 @@ class ContextCommandManager:
                     context.name,
                     context.current_agent,
                     str(len(context.messages)),
-                    context.messages[-1].content[:100] + '...' if context.messages else "",
+                    (
+                        context.messages[-1].content[:100] + "..."
+                        if context.messages
+                        else ""
+                    ),
                 ]
                 for context in self.context_manager.contexts.values()
             ],

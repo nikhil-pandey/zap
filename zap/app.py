@@ -200,11 +200,14 @@ class ZapApp:
 
     async def chat_async(self, user_input: str, context: Context, agent: Agent):
         template_context = await build_agent_template_context(
-            user_input, context, agent, self.state, self.config, self.context_manager.contexts
+            user_input,
+            context,
+            agent,
+            self.state,
+            self.config,
+            self.context_manager.contexts,
         )
-        rendered_input = await self.template_engine.render(
-            user_input, template_context
-        )
+        rendered_input = await self.template_engine.render(user_input, template_context)
         output = await agent.process(rendered_input, context, template_context)
 
         for msg in output.message_history:

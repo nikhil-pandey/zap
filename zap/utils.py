@@ -43,8 +43,10 @@ async def get_file_content(root, file, prefix_lines=True):
 
         if prefix_lines:
             lines = file_content.splitlines()
-            prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
-            file_content = '\n'.join(prefixed_lines)
+            prefixed_lines = [
+                f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)
+            ]
+            file_content = "\n".join(prefixed_lines)
 
         formatted_content = (
             f"```{ext}\n{comment_start} filename: {file}\n" + file_content + "\n```"

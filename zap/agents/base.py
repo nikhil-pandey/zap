@@ -15,7 +15,13 @@ from zap.tools.tool_manager import ToolManager
 
 
 class Agent(ABC):
-    def __init__(self, config: AgentConfig, tool_manager: ToolManager, ui: UIInterface, engine: ZapTemplateEngine):
+    def __init__(
+        self,
+        config: AgentConfig,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
+    ):
         self.tool_manager = tool_manager
         self.tool_schemas = []
         self.ui = ui
@@ -34,7 +40,9 @@ class Agent(ABC):
         self.supports_tool_calling = True
         self.supports_parallel_tool_calls = True
 
-    async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
+    async def process(
+        self, message: str, context: Context, template_context: dict
+    ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
         except BadRequestError as e:
@@ -46,7 +54,9 @@ class Agent(ABC):
             self.ui.exception(ex, f"Failed to process message: {message}")
             raise
 
-    async def _try_process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
+    async def _try_process(
+        self, message: str, context: Context, template_context: dict
+    ) -> AgentOutput:
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())
@@ -78,8 +88,16 @@ class Agent(ABC):
                     response = await acompletion(
                         model=self.config.model,
                         messages=messages,
-                        tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
-                        tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
+                        tools=(
+                            self.tool_schemas
+                            if self.supports_tool_calling and self.tool_schemas
+                            else None
+                        ),
+                        tool_choice=(
+                            "auto"
+                            if self.supports_tool_calling and self.tool_schemas
+                            else None
+                        ),
                         parallel_tool_calls=(
                             self.supports_parallel_tool_calls
                             if self.supports_tool_calling
@@ -127,7 +145,9 @@ class Agent(ABC):
                 )
                 raise
 
-    async def handle_tool_calls(self, round: int, tool_calls: any) -> list[dict[str, any]]:
+    async def handle_tool_calls(
+        self, round: int, tool_calls: any
+    ) -> list[dict[str, any]]:
         tool_responses = []
 
         # Do one pass and make sure we have valid tool calls
@@ -140,16 +160,22 @@ class Agent(ABC):
                 function_args = json.loads(function_args_str)
                 tool = self.tool_manager.get_tool(function_name)
                 if isinstance(tool, EditFileTool):
-                    edit_tool_calls.append((tool, function_name, function_args, tool_call))
+                    edit_tool_calls.append(
+                        (tool, function_name, function_args, tool_call)
+                    )
                 else:
-                    valid_tool_calls.append((tool, function_name, function_args, tool_call))
+                    valid_tool_calls.append(
+                        (tool, function_name, function_args, tool_call)
+                    )
             except Exception as e:
-                tool_responses.append({
-                    "tool_call_id": tool_call.id,
-                    "role": "tool",
-                    "name": tool_call.function.name,
-                    "content": f"Invalid tool call {tool_call.function.name}: {e}"
-                })
+                tool_responses.append(
+                    {
+                        "tool_call_id": tool_call.id,
+                        "role": "tool",
+                        "name": tool_call.function.name,
+                        "content": f"Invalid tool call {tool_call.function.name}: {e}",
+                    }
+                )
 
         # order the edit tool calls in descending order ot start line
         edit_tool_calls.sort(key=lambda x: x[2]["start_line"], reverse=True)

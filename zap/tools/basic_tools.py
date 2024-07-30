@@ -50,7 +50,7 @@ class ReadFileTool(Tool):
 
         # Prefix lines with line numbers
         prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
-        content = ''.join(prefixed_lines)
+        content = "".join(prefixed_lines)
 
         return {"status": "success", "content": content, "size": len(content)}
 
@@ -63,15 +63,15 @@ class WriteFileTool(Tool):
         self.app_state = app_state
 
     async def execute(
-            self,
-            filename: Annotated[str, "Path to the file to write"],
-            content: Annotated[str, "Content to write to the file"],
+        self,
+        filename: Annotated[str, "Path to the file to write"],
+        content: Annotated[str, "Content to write to the file"],
     ):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, "w", encoding='utf-8') as file:
+        with open(full_path, "w", encoding="utf-8") as file:
             file.write(content)
         return {
             "status": "success",
@@ -178,18 +178,54 @@ class LintProjectTool(ShellCommandTool):
 
 class RawShellCommandTool(ShellCommandTool):
     ALLOWED_COMMANDS = [
-        "ls", "pwd", "echo", "cat", "git", "python", "pip", "poetry", "pytest", "flake8", "black",
-        "sed", "awk", "find", "grep", "sort", "uniq", "wc", "head", "tail", "touch", "cp",
-        "dir", "cd", "type", "where", "set", "cls", "copy", "del",
-        "move", "ren", "mkdir", "rmdir", "xcopy",
+        "ls",
+        "pwd",
+        "echo",
+        "cat",
+        "git",
+        "python",
+        "pip",
+        "poetry",
+        "pytest",
+        "flake8",
+        "black",
+        "sed",
+        "awk",
+        "find",
+        "grep",
+        "sort",
+        "uniq",
+        "wc",
+        "head",
+        "tail",
+        "touch",
+        "cp",
+        "dir",
+        "cd",
+        "type",
+        "where",
+        "set",
+        "cls",
+        "copy",
+        "del",
+        "move",
+        "ren",
+        "mkdir",
+        "rmdir",
+        "xcopy",
     ]
 
     def __init__(self, app_state: AppState):
         super().__init__("shell_command", "Run a raw shell command.", app_state)
 
     async def execute(self, command: Annotated[str, "Command to run"]):
-        if not any(command.startswith(allowed_command) for allowed_command in self.ALLOWED_COMMANDS):
-            raise ValueError(f"Command not allowed. Allowed commands: {self.ALLOWED_COMMANDS}")
+        if not any(
+            command.startswith(allowed_command)
+            for allowed_command in self.ALLOWED_COMMANDS
+        ):
+            raise ValueError(
+                f"Command not allowed. Allowed commands: {self.ALLOWED_COMMANDS}"
+            )
         return await self.run_command(command)
 
 
@@ -197,7 +233,7 @@ class EditFileTool(Tool):
     def __init__(self, app_state: AppState):
         super().__init__(
             "edit_file",
-            "Edit the content of a file within the repository boundary between start line and end line."
+            "Edit the content of a file within the repository boundary between start line and end line.",
         )
         self.app_state = app_state
 
@@ -206,7 +242,7 @@ class EditFileTool(Tool):
         filename: Annotated[str, "Path to the file to edit"],
         start_line: Annotated[int, "The starting line number (1-indexed)"],
         end_line: Annotated[int, "The ending line number (1-indexed)"],
-        content: Annotated[str, "Content to replace in the specified lines"]
+        content: Annotated[str, "Content to replace in the specified lines"],
     ):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
@@ -214,7 +250,7 @@ class EditFileTool(Tool):
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File {filename} does not exist.")
 
-        with open(full_path, "r", encoding='utf-8') as file:
+        with open(full_path, "r", encoding="utf-8") as file:
             lines = file.readlines()
 
         # Adjust for zero-indexed list
@@ -222,15 +258,15 @@ class EditFileTool(Tool):
         end_line -= 1
 
         # Replace lines
-        lines[start_line:end_line + 1] = [content + "\n"]
+        lines[start_line : end_line + 1] = [content + "\n"]
 
-        with open(full_path, "w", encoding='utf-8') as file:
+        with open(full_path, "w", encoding="utf-8") as file:
             file.writelines(lines)
 
         return {
             "status": "success",
             "message": f"File {filename} edited successfully.",
-            "edited_lines": f"{start_line + 1}-{end_line + 1}"
+            "edited_lines": f"{start_line + 1}-{end_line + 1}",
         }
 
 

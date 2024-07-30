@@ -9,11 +9,11 @@ from zap.tools.tool_manager import ToolManager
 
 class AgentManager:
     def __init__(
-            self,
-            config_dir: Path,
-            tool_manager: ToolManager,
-            ui: UIInterface,
-            engine: ZapTemplateEngine,
+        self,
+        config_dir: Path,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
     ):
         self.tool_manager = tool_manager
         self.ui = ui
