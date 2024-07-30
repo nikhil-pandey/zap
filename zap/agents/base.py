@@ -16,11 +16,11 @@ from zap.tools.tool_manager import ToolManager
 
 class Agent(ABC):
     def __init__(
-        self,
-        config: AgentConfig,
-        tool_manager: ToolManager,
-        ui: UIInterface,
-        engine: ZapTemplateEngine,
+            self,
+            config: AgentConfig,
+            tool_manager: ToolManager,
+            ui: UIInterface,
+            engine: ZapTemplateEngine,
     ):
         self.tool_manager = tool_manager
         self.tool_schemas = []
@@ -38,16 +38,16 @@ class Agent(ABC):
         self.config = config
         self.engine = engine
         self.supports_tool_calling = (
-            ModelCapabilities.supports_function_calling(config.provider, config.model)
-            and config.tools
+                ModelCapabilities.supports_function_calling(config.provider, config.model)
+                and config.tools
         )
         if not self.supports_tool_calling and config.tools:
             raise ValueError(f"Model {config.model} does not support tool calling")
         self.supports_parallel_tool_calls = (
-            ModelCapabilities.supports_parallel_function_calling(
-                config.provider, config.model
-            )
-            and config.tools
+                ModelCapabilities.supports_parallel_function_calling(
+                    config.provider, config.model
+                )
+                and config.tools
         )
         if not self.supports_parallel_tool_calls and config.tools:
             self.ui.warning(
@@ -55,7 +55,7 @@ class Agent(ABC):
             )
 
     async def process(
-        self, message: str, context: Context, template_context: dict
+            self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
@@ -69,7 +69,7 @@ class Agent(ABC):
             raise
 
     async def _try_process(
-        self, message: str, context: Context, template_context: dict
+            self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         messages = []
         for msg in context.messages:
@@ -92,75 +92,81 @@ class Agent(ABC):
         else:
             messages.append({"role": "user", "content": message})
 
-        self.ui.debug(f"You: {escape(message)}")
+        self.ui.debug(f"You: {escape(message) if message else ''}")
 
         running = True
         round = 1
         while running:
-            response = await acompletion(
-                model=self.config.model,
-                messages=messages,
-                tools=self.tool_schemas if self.supports_tool_calling else None,
-                tool_choice="auto" if self.supports_tool_calling else None,
-                parallel_tool_calls=(
-                    self.supports_parallel_tool_calls
-                    if self.supports_tool_calling
-                    else None
-                ),
-                metadata={
-                    "generation_name": "ishaan-test-generation",
-                    "generation_id": "gen-id22",
-                    "parent_observation_id": "obs-id9",
-                    "version": "test-generation-version",
-                    "trace_user_id": "user-id2",
-                    "session_id": "session-1",
-                    "tags": ["tag1", "tag2"],
-                    "trace_name": "new-trace-name",
-                    "trace_id": "trace-id22",
-                    "trace_metadata": {"key": "value"},
-                    "trace_version": "test-trace-version",
-                    "trace_release": "test-trace-release",
-                    "existing_trace_id": "trace-id22",
-                    "trace_metadata": {"key": "updated_trace_value"},
-                    "update_trace_keys": ["input", "output", "trace_metadata"],
-                    "debug_langfuse": True,
-                },
-            )
-
-            response_message = response.choices[0].message
-            content = response_message["content"]
-            tool_calls = response_message.tool_calls
-            self.ui.print(f"{self.config.type}: {escape(content)}")
-
-            if tool_calls is None or len(tool_calls) == 0:
-                messages.append({"role": "assistant", "content": content})
-                return AgentOutput(
-                    content=content, message_history=messages[original_message_count:]
+            try:
+                response = await acompletion(
+                    model=self.config.model,
+                    messages=messages,
+                    tools=self.tool_schemas if self.supports_tool_calling else None,
+                    tool_choice="auto" if self.supports_tool_calling else None,
+                    parallel_tool_calls=(
+                        self.supports_parallel_tool_calls
+                        if self.supports_tool_calling
+                        else None
+                    ),
+                    metadata={
+                        "generation_name": "ishaan-test-generation",
+                        "generation_id": "gen-id22",
+                        "parent_observation_id": "obs-id9",
+                        "version": "test-generation-version",
+                        "trace_user_id": "user-id2",
+                        "session_id": "session-1",
+                        "tags": ["tag1", "tag2"],
+                        "trace_name": "new-trace-name",
+                        "trace_id": "trace-id22",
+                        "trace_metadata": {"key": "value"},
+                        "trace_version": "test-trace-version",
+                        "trace_release": "test-trace-release",
+                        "existing_trace_id": "trace-id22",
+                        "trace_metadata": {"key": "updated_trace_value"},
+                        "update_trace_keys": ["input", "output", "trace_metadata"],
+                        "debug_langfuse": True,
+                    },
                 )
 
-            messages.append(
-                {
-                    "role": "assistant",
-                    "content": content,
-                    "tool_calls": [
-                        {
-                            "id": tool.id,
-                            "type": tool.type,
-                            "function": {
-                                "name": tool.function.name,
-                                "arguments": tool.function.arguments,
-                            },
-                        }
-                        for tool in tool_calls
-                    ],
-                }
-            )
-            tool_responses = await self.handle_tool_calls(round, tool_calls)
-            round += 1
-            messages.extend(tool_responses)
+                response_message = response.choices[0].message
+                content = response_message["content"]
+                tool_calls = response_message.tool_calls
+                self.ui.print(f"{self.config.type}: {escape(content) if content else ''}")
+
+                if tool_calls is None or len(tool_calls) == 0:
+                    messages.append({"role": "assistant", "content": content})
+                    return AgentOutput(
+                        content=content, message_history=messages[original_message_count:]
+                    )
+
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": content,
+                        "tool_calls": [
+                            {
+                                "id": tool.id,
+                                "type": tool.type,
+                                "function": {
+                                    "name": tool.function.name,
+                                    "arguments": tool.function.arguments,
+                                },
+                            }
+                            for tool in tool_calls
+                        ],
+                    }
+                )
+                tool_responses = await self.handle_tool_calls(round, tool_calls)
+                round += 1
+                messages.extend(tool_responses)
+            except BadRequestError as e:
+                self.ui.exception(
+                    e, f"Bad request error while processing message: {message}"
+                )
+                raise
 
     async def handle_tool_calls(
-        self, round: int, tool_calls: any
+            self, round: int, tool_calls: any
     ) -> list[dict[str, any]]:
         tool_responses = []
         for tool_call in tool_calls:
@@ -186,7 +192,7 @@ class Agent(ABC):
 
     @tool_executor
     async def handle_tool_call(
-        self, function_name, function_args_str, tool_call, tool_responses
+            self, function_name, function_args_str, tool_call, tool_responses
     ):
         tool = self.tool_manager.get_tool(function_name)
         function_args = json.loads(function_args_str)

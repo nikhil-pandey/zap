@@ -3,8 +3,8 @@ auto_archive_contexts: true
 auto_load_contexts: true
 auto_persist_contexts: true
 build_command: poetry build
-lint_command: poetry run flake8
-test_command: poetry run pytest
+lint_command: powershell scripts/lint.ps1
+test_command: powershell scripts/test.ps1
 dependency_manager: null
 git_analyzer_config:
   commit_limit: 10
