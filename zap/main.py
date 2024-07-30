@@ -115,10 +115,10 @@ def set_environment_variables(args):
     if os.getenv("HELICONE_API_KEY") is not None:
         callbacks.append("helicone")
 
+    import litellm
     if len(callbacks) > 0:
-        import litellm
-
         litellm.success_callbacks = callbacks
+    litellm.drop_params = True
 
     if args.verbose:
         # print env variables partially for debugging

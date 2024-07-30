@@ -1,0 +1,1 @@
+pytest --cov=zap.templating --cov-report xml:coverage.xml

@@ -59,7 +59,7 @@ class UtilityCommands:
 
         try:
             pyperclip.copy(content)
-            encoded = self.state.tokenizer.encode(content)
+            encoded = self.state.tokenizer.encode(content) if self.state.tokenizer else []
             self.ui.print(f"Copied {len(encoded)} tokens to clipboard.")
         except Exception as e:
             self.ui.error(f"Failed to copy to clipboard: {str(e)}")
