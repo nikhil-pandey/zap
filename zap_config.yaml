@@ -1,5 +1,5 @@
 agent: chat
-auto_archive_contexts: true
+auto_archive_contexts: false
 auto_load_contexts: true
 auto_persist_contexts: true
 build_command: poetry build

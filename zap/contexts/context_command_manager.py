@@ -31,8 +31,7 @@ class ContextCommandManager:
         self.context_manager.switch_agent(context.name, agent_name)
         self.ui.print(f"Switched to agent: {agent_name}")
 
-    async def list_contexts(self):
-        contexts = self.context_manager.list_contexts()
+    async def show_contexts(self):
         self.ui.table(
             "Contexts",
             ["Context", "Agent", "Messages Count", "Last message"],
@@ -47,7 +46,6 @@ class ContextCommandManager:
             ],
         )
 
-    async def show_current_context(self):
         context = self.context_manager.get_current_context()
         self.ui.print(f"Current context: {context.name}")
         self.ui.print(f"Current agent: {context.current_agent}")
@@ -85,7 +83,7 @@ class ContextCommandManager:
         else:
             self.ui.print("No saved contexts found.")
 
-    async def list_agents(self):
+    async def show_agents(self):
         agents = self.agent_manager.list_agents()
         self.ui.print("Available agents:")
         for agent in agents:
@@ -120,9 +118,9 @@ class ContextCommandManager:
             self.ui.error(
                 "Archive with the same name already exists. Please choose a different name."
             )
-            await self.list_archived_contexts()
+            await self.show_archives()
 
-    async def list_archived_contexts(self):
+    async def show_archives(self):
         archived_contexts = self.context_manager.list_archived_contexts()
         if archived_contexts:
             self.ui.print("Archived contexts:")
@@ -139,4 +137,4 @@ class ContextCommandManager:
             self.ui.print(f"Loaded archived context and switched to: {item}")
         else:
             self.ui.error(f"No archived context found with name: {archive_name}")
-            await self.list_archived_contexts()
+            await self.show_archives()
