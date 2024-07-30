@@ -1,11 +1,10 @@
-import os
 import subprocess
 
-import aiofiles
 import pyperclip
 
 from zap.app_state import AppState
 from zap.cliux import UIInterface
+from zap.utils import get_files_content
 
 
 class UtilityCommands:
@@ -42,21 +41,7 @@ class UtilityCommands:
         }
         root = self.state.git_repo.root
 
-        content = ""
-        for file in self.state.get_files():
-            ext = os.path.splitext(file)[1].lstrip(".").lower()
-            comment_start, comment_end = comment_styles.get(ext, ("#", "#"))
-            try:
-                async with aiofiles.open(os.path.join(root, file), "r") as f:
-                    file_content = await f.read()
-                content += (
-                    f"```{ext}\n{comment_start} filename: {file} {comment_end}\n"
-                    + file_content
-                    + f"\n{comment_start} end of {file} {comment_end}\n```\n"
-                )
-            except Exception as e:
-                self.ui.error(f"Failed to read {file}: {str(e)}")
-
+        content = await get_files_content(root, self.state.get_files())
         try:
             pyperclip.copy(content)
             encoded = (

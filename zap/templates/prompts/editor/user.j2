@@ -1,0 +1,38 @@
+# filename: zap/templates/prompts/code/user.j2 #
+Task description:
+<task>
+{{ message }}
+</task>
+Project context:
+- Repository Root: {{ root }}
+- OS: {{ os }}
+Repository Metadata:
+<repoMetadata>
+{{ repo_metadata }}
+</repoMetadata>
+File contents (DO NOT use read_file for these):
+<fileContents>
+{{ files }}
+</fileContents>
+Implement the required changes using the available tools. Remember to use as few tool calls as possible. Output CONTINUE after each tool use or ASK FOR FEEDBACK when the task is complete.
+
+Important note on using edit_file:
+The edit_file function takes 4 arguments:
+1. filename: Annotated[str, "Path to the file to edit"]
+2. start_line: Annotated[int, "The starting line number (1-indexed)"]
+3. end_line: Annotated[int, "The ending line number (1-indexed)"]
+4. content: Annotated[str, "Content to replace in the specified lines"]
+
+When using edit_file, ignore the line numbers in the content and use only the actual code. Pay attention to whitespace, especially leading spaces.
+
+Example of correct edit_file usage:
+
+edit_file(
+    filename="zap/config.py",
+    start_line=22,
+    end_line=23,
+    content='    agent: str = "gpt-4"\n    auto_persist_contexts: bool = False\n'
+)
+
+This example replaces lines 22 and 23 with the new content, preserving the correct indentation of 4 spaces.
+# end of zap/templates/prompts/code/user.j2 #

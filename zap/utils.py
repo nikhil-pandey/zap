@@ -3,7 +3,7 @@ import os
 import aiofiles
 
 
-async def get_files_content(root, files, prefix_lines=False):
+async def get_files_content(root, files, prefix_lines=True):
     """Get content of multiple files."""
     content = ""
     for file in files:
@@ -13,7 +13,7 @@ async def get_files_content(root, files, prefix_lines=False):
     return content.strip()
 
 
-async def get_file_content(root, file, prefix_lines=False):
+async def get_file_content(root, file, prefix_lines=True):
     comment_styles = {
         "py": "#",
         "js": "//",
