@@ -100,17 +100,18 @@ class Agent(ABC):
         round = 1
         while running:
             try:
-                response = await acompletion(
-                    model=self.config.model,
-                    messages=messages,
-                    tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
-                    tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
-                    parallel_tool_calls=(
-                        self.supports_parallel_tool_calls
-                        if self.supports_tool_calling
-                        else None
-                    ),
-                )
+                with self.ui.spinner(f"Thinking..."):
+                    response = await acompletion(
+                        model=self.config.model,
+                        messages=messages,
+                        tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
+                        tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
+                        parallel_tool_calls=(
+                            self.supports_parallel_tool_calls
+                            if self.supports_tool_calling
+                            else None
+                        ),
+                    )
 
                 response_message = response.choices[0].message
                 content = response_message["content"]

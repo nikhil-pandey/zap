@@ -3,17 +3,17 @@ import os
 import aiofiles
 
 
-async def get_files_content(root, files):
+async def get_files_content(root, files, prefix_lines=False):
     """Get content of multiple files."""
     content = ""
     for file in files:
-        file_content = await get_file_content(root, file)
+        file_content = await get_file_content(root, file, prefix_lines)
         if file_content:
             content += file_content + "\n"
     return content.strip()
 
 
-async def get_file_content(root, file):
+async def get_file_content(root, file, prefix_lines=False):
     comment_styles = {
         "py": "#",
         "js": "//",
@@ -40,6 +40,11 @@ async def get_file_content(root, file):
     try:
         async with aiofiles.open(os.path.join(root, file), "r") as f:
             file_content = await f.read()
+
+        if prefix_lines:
+            lines = file_content.splitlines()
+            prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
+            file_content = '\n'.join(prefixed_lines)
 
         formatted_content = (
             f"```{ext}\n{comment_start} filename: {file}\n" + file_content + "\n```"
