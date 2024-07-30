@@ -268,7 +268,7 @@ class EditFileTool(Tool):
             file.writelines(lines)
 
         return {
-            "status": "success",
+            "status": "success" if abs(end_line - start_line) < 20 else "warning",
             "message": f"File {filename} edited successfully.",
             "edited_lines": f"{start_line + 1}-{end_line + 1}",
         }
