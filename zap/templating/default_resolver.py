@@ -16,7 +16,7 @@ class DefaultPathResolver(PathResolver):
         else:
             file_path = os.path.join(self.root_path, path)
 
-        async with aiofiles.open(file_path, mode="r") as file:
+        async with aiofiles.open(file_path, mode="r", encoding='utf-8') as file:
             content = await file.read()
         return content
 
