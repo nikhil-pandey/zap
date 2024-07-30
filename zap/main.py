@@ -108,6 +108,18 @@ def set_environment_variables(args):
         openai.http_client = httpx.Client(verify=False)
         litellm.aclient_session = httpx.AsyncClient(verify=False)
 
+    callbacks = []
+    if os.getenv("LANGFUSE_PUBLIC_KEY") is not None:
+        callbacks.append("langfuse")
+    if os.getenv("LUNARY_PUBLIC_KEY") is not None:
+        callbacks.append("lunary")
+    if os.getenv("HELICONE_API_KEY") is not None:
+        callbacks.append("helicone")
+
+    if len(callbacks) > 0:
+        import litellm
+        litellm.success_callbacks = callbacks
+
     if args.verbose:
         # print env variables partially for debugging
         print("Environment Variables:")

@@ -78,10 +78,23 @@ class Agent(ABC):
                 tool_choice="auto" if self.supports_tool_calling else None,
                 parallel_tool_calls=self.supports_parallel_tool_calls if self.supports_tool_calling else None,
                 metadata={
-                    'agent_name': self.config.name,
-                    'agent_type': self.config.type,
-                    'context_name': context.name,
-                }
+                  "generation_name": "ishaan-test-generation",
+                  "generation_id": "gen-id22",
+                  "parent_observation_id": "obs-id9",
+                  "version":  "test-generation-version",
+                  "trace_user_id": "user-id2",
+                  "session_id": "session-1",
+                  "tags": ["tag1", "tag2"],
+                  "trace_name": "new-trace-name",
+                  "trace_id": "trace-id22",
+                  "trace_metadata": {"key": "value"},
+                  "trace_version": "test-trace-version",
+                  "trace_release": "test-trace-release",
+                  "existing_trace_id": "trace-id22",
+                  "trace_metadata": {"key": "updated_trace_value"},
+                  "update_trace_keys": ["input", "output", "trace_metadata"],
+                  "debug_langfuse": True,
+              }
             )
 
             response_message = response.choices[0].message

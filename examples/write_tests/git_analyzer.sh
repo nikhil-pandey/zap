@@ -1,0 +1,1 @@
+python -m zap --tasks git_analyzer.txt --verbose
