@@ -101,8 +101,8 @@ workflow capabilities. Here's an updated section for the Usage Examples:
    Create a program for generating the Fibonacci sequence. Instruct them to put the code in src/. Implement code with various complexities. Dont give them the real implementation.
 
    # Write the Fibonacci program
-   /switch_context code_shell
-   /switch_agent code
+   /switch_context code
+   /switch_agent code_shell
    Write a program for Fibonacci generating sequence. {{ prompt.message }}
    Go over the original requirements and do a self-reflect on whats missing?
    Do you think its complete now or needs more work?
@@ -188,21 +188,6 @@ subgraph Context 1
 - You can switch between contexts using commands
 - You can replace the agent within a context to continue the conversation with a different agent
 - Jinja templating can be used in input strings to reference across contexts, enabling powerful workflows
-
-Example workflow:
-
-```
-/switch_context prompt
-/switch_agent promptgenerator
-Generate a prompt for a code refactoring task
-/switch_context code
-/add path/to/relevant/files
-Refactor the following code based on the generated prompt: 
-{{ prompt }}
-
-Here are the relevant files:
-{{ files }}
-```
 
 ## Contributing
 
