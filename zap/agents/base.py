@@ -72,6 +72,7 @@ class Agent(ABC):
     async def _try_process(
         self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
+        # TODO: This is probably going to be duplicate across agents, neet to refactor this
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())

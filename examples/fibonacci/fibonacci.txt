@@ -1,0 +1,17 @@
+/switch_context prompt
+/switch_agent promptgenerator
+Create a program for generating the Fibonacci sequence. Instruct them to put the code in src/. Implement code with various complexities. Dont give them the real implementation.
+/switch_context code_shell
+/switch_agent code
+Write a program for Fibonacci generating sequence. {{ prompt.message }}
+Go over the original requirements and do a self-reflect on whats missing?
+Do you think its complete now or needs more work?
+/switch_context prompt
+/switch_agent promptgenerator
+Now Write one for generating tests. YOU CANNOT FINISH UNTIL ALL TESTS PASS
+/switch_context code_shelltest
+/switch_agent code
+/add src
+/ls
+{{ prompt.message }}. Here are the relevant files: {{ files }}.
+/save_context

@@ -98,22 +98,29 @@ workflow capabilities. Here's an updated section for the Usage Examples:
    # Generate a prompt for the Fibonacci program
    /switch_context prompt
    /switch_agent promptgenerator
-   Generate a prompt for Generating Fibonacci numbers. Make sure to focus on clean and maintainable code. And to use python. And ask the agent to output to src directory
+   Create a program for generating the Fibonacci sequence. Instruct them to put the code in src/. Implement code with various complexities. Dont give them the real implementation.
 
    # Write the Fibonacci program
-   /switch_context code
-   Write a program for Fibonacci generating sequence. {{ prompt }}
+   /switch_context code_shell
+   /switch_agent code
+   Write a program for Fibonacci generating sequence. {{ prompt.message }}
+   Go over the original requirements and do a self-reflect on whats missing?
+   Do you think its complete now or needs more work?
 
    # Generate a prompt for tests
    /switch_context prompt
-   Now generate one for generating tests.
+   /switch_agent promptgenerator
+   Now Write one for generating tests. YOU CANNOT FINISH UNTIL ALL TESTS PASS
 
    # Write tests for the Fibonacci program
    /switch_context test
+   /switch_agent code_shell
+   # Makes all the code available in {{ files }} variable
    /add src
+   # Shows all the files in the context and their token count
    /ls
-   Write test the following code {{ files}}. {{prompt}}
-
+   {{ prompt.message }}. Here are the relevant files: {{ files }}.
+ 
    # Save the entire workflow state
    /save_context
    ```

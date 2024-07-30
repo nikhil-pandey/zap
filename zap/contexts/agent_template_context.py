@@ -1,6 +1,6 @@
 import dataclasses
 import os
-from dataclasses import dataclass
+from typing import Dict, Any
 
 from zap.agents import Agent
 from zap.app_state import AppState
@@ -9,61 +9,37 @@ from zap.contexts.context import Context
 from zap.utils import get_files_content
 
 
-@dataclass
-class AgentTemplateContext:
+async def build_agent_template_context(message: str, context: Context, agent: Agent, state: AppState, config: AppConfig,
+                                       contexts: dict[str, Context]) -> Dict[str, Any]:
     """
-    This class represents the context of an agent template.
+    Builds the agent template context as a dictionary.
     """
+    list_of_files = state.get_files()
+    files = await get_files_content(state.git_repo.root, list_of_files)
 
-    """
-    The message to be displayed to the user.    
-    """
-    message: str
+    output = {
+        "message": message,
+        "list_of_files": list(list_of_files),
+        "files": files,
+        "root": state.git_repo.root,
+        "os": os.name,
+        "repo_metadata": dataclasses.asdict(state.repo_metadata),
+    }
 
-    """
-    The list of files in the context.
-    """
-    list_of_files: list[str]
+    for context_name, ctx in contexts.items():
+        if context_name in output:
+            # TODO: disallow creation of context with the same name as reserved keys
+            raise ValueError(f"Context name {context_name} is already in the output dictionary")
 
-    """
-    The content of all the files
-    """
-    files: str
+        if ctx.messages and len(ctx.messages) > 0:
+            output[context_name] = {
+                'message': ctx.messages[-1].content,
+                'history': [msg.to_dict() for msg in ctx.messages]
+            }
+        else:
+            output[context_name] = {
+                'message': '',
+                'history': []
+            }
 
-    """
-    The root directory of the git repository.
-    """
-    root: str
-
-    """
-    The operating system of the user.
-    """
-    os: str
-
-    """
-    The list of git exploration results.
-    """
-    repo_metadata: dict  # TODO: refine this further
-
-    @classmethod
-    async def build(
-        cls,
-        message: str,
-        context: Context,
-        agent: Agent,
-        state: AppState,
-        config: AppConfig,
-    ) -> "AgentTemplateContext":
-        """
-        Builds the AgentTemplateContext object.
-        """
-        list_of_files = state.get_files()
-        files = await get_files_content(state.git_repo.root, list_of_files)
-        return cls(
-            message,
-            list(list_of_files),
-            files,
-            root=state.git_repo.root,
-            os=os.name,
-            repo_metadata=dataclasses.asdict(state.repo_metadata),
-        )
+    return output
