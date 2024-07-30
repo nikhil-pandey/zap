@@ -22,7 +22,9 @@ async def test_git_analyzer(temp_git_repo):
 @pytest.mark.asyncio
 async def test_git_analyzer_parser_error(monkeypatch):
     config = GitAnalyzerConfig()
-    with pytest.raises(RepoError, match="Path /path/to/nonexistent/repo does not exist"):
+    with pytest.raises(
+        RepoError, match="Path /path/to/nonexistent/repo does not exist"
+    ):
         GitAnalyzer("/path/to/nonexistent/repo", config)
 
 

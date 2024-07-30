@@ -116,6 +116,7 @@ def set_environment_variables(args):
         callbacks.append("helicone")
 
     import litellm
+
     if len(callbacks) > 0:
         litellm.success_callbacks = callbacks
     litellm.drop_params = True

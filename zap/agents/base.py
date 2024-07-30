@@ -15,11 +15,11 @@ from zap.tools.tool_manager import ToolManager
 
 class Agent(ABC):
     def __init__(
-            self,
-            config: AgentConfig,
-            tool_manager: ToolManager,
-            ui: UIInterface,
-            engine: ZapTemplateEngine,
+        self,
+        config: AgentConfig,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
     ):
         self.tool_manager = tool_manager
         self.tool_schemas = []
@@ -56,7 +56,7 @@ class Agent(ABC):
         self.supports_parallel_tool_calls = True
 
     async def process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
@@ -70,7 +70,7 @@ class Agent(ABC):
             raise
 
     async def _try_process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         messages = []
         for msg in context.messages:
@@ -170,7 +170,7 @@ class Agent(ABC):
                 raise
 
     async def handle_tool_calls(
-            self, round: int, tool_calls: any
+        self, round: int, tool_calls: any
     ) -> list[dict[str, any]]:
         tool_responses = []
         for tool_call in tool_calls:
@@ -196,7 +196,7 @@ class Agent(ABC):
 
     @tool_executor
     async def handle_tool_call(
-            self, function_name, function_args_str, tool_call, tool_responses
+        self, function_name, function_args_str, tool_call, tool_responses
     ):
         tool = self.tool_manager.get_tool(function_name)
         function_args = json.loads(function_args_str)

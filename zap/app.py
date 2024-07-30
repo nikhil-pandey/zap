@@ -73,7 +73,9 @@ class ZapApp:
         )
         default_agent = self.agent_manager.get_agent(self.config.agent)
         if default_agent.config.model.startswith("gpt"):
-            self.state.tokenizer = tiktoken.encoding_for_model(default_agent.config.model)
+            self.state.tokenizer = tiktoken.encoding_for_model(
+                default_agent.config.model
+            )
         self.context_manager = ContextManager(self.agent_manager, self.config.agent)
         if self.config.auto_archive_contexts:
             archive_name = f"AutoArchive-{time.strftime('%Y-%m-%d-%H-%M-%S')}"

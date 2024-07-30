@@ -72,7 +72,9 @@ class FileContextManager:
             if path.is_file():
                 try:
                     token_count = len(
-                        self.state.tokenizer.encode(path.read_text(encoding="utf-8")) if self.state.tokenizer else 0
+                        self.state.tokenizer.encode(path.read_text(encoding="utf-8"))
+                        if self.state.tokenizer
+                        else 0
                     )
                     total += token_count
                 except Exception as e:

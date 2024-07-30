@@ -17,3 +17,10 @@
 ## Dependency Conventions
 - Use `poetry` for dependency management.
 - For `questionary` prompts, use `ask_async` instead of `ask` for asynchronous operations.
+
+## Testing Conventions
+- Make sure code coverage is at least 90%
+- Make sure to use temp directories for tests that require file I/O.
+- Use `pytest` for testing.
+- Use `pytest-asyncio` for testing asynchronous code.
+- Use `coverage` for code coverage.
