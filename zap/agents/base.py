@@ -16,11 +16,11 @@ from zap.tools.tool_manager import ToolManager
 
 class Agent(ABC):
     def __init__(
-            self,
-            config: AgentConfig,
-            tool_manager: ToolManager,
-            ui: UIInterface,
-            engine: ZapTemplateEngine,
+        self,
+        config: AgentConfig,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
     ):
         self.tool_manager = tool_manager
         self.tool_schemas = []
@@ -38,16 +38,16 @@ class Agent(ABC):
         self.config = config
         self.engine = engine
         self.supports_tool_calling = (
-                ModelCapabilities.supports_function_calling(config.provider, config.model)
-                and config.tools
+            ModelCapabilities.supports_function_calling(config.provider, config.model)
+            and config.tools
         )
         if not self.supports_tool_calling and config.tools:
             raise ValueError(f"Model {config.model} does not support tool calling")
         self.supports_parallel_tool_calls = (
-                ModelCapabilities.supports_parallel_function_calling(
-                    config.provider, config.model
-                )
-                and config.tools
+            ModelCapabilities.supports_parallel_function_calling(
+                config.provider, config.model
+            )
+            and config.tools
         )
         if not self.supports_parallel_tool_calls and config.tools:
             self.ui.warning(
@@ -55,7 +55,7 @@ class Agent(ABC):
             )
 
     async def process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
@@ -69,7 +69,7 @@ class Agent(ABC):
             raise
 
     async def _try_process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         messages = []
         for msg in context.messages:
@@ -131,12 +131,15 @@ class Agent(ABC):
                 response_message = response.choices[0].message
                 content = response_message["content"]
                 tool_calls = response_message.tool_calls
-                self.ui.print(f"{self.config.type}: {escape(content) if content else ''}")
+                self.ui.print(
+                    f"{self.config.type}: {escape(content) if content else ''}"
+                )
 
                 if tool_calls is None or len(tool_calls) == 0:
                     messages.append({"role": "assistant", "content": content})
                     return AgentOutput(
-                        content=content, message_history=messages[original_message_count:]
+                        content=content,
+                        message_history=messages[original_message_count:],
                     )
 
                 messages.append(
@@ -166,7 +169,7 @@ class Agent(ABC):
                 raise
 
     async def handle_tool_calls(
-            self, round: int, tool_calls: any
+        self, round: int, tool_calls: any
     ) -> list[dict[str, any]]:
         tool_responses = []
         for tool_call in tool_calls:
@@ -192,7 +195,7 @@ class Agent(ABC):
 
     @tool_executor
     async def handle_tool_call(
-            self, function_name, function_args_str, tool_call, tool_responses
+        self, function_name, function_args_str, tool_call, tool_responses
     ):
         tool = self.tool_manager.get_tool(function_name)
         function_args = json.loads(function_args_str)
