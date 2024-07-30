@@ -1,7 +1,7 @@
 import pytest
-
 from zap.git_analyzer.analyzer import GitAnalyzer, analyze_repo
 from zap.git_analyzer.config import GitAnalyzerConfig
+from zap.git_analyzer.exceptions import ParserError, GitAnalyzerError, RepoError
 
 
 @pytest.mark.asyncio
@@ -17,6 +17,13 @@ async def test_git_analyzer(temp_git_repo):
     assert result.most_changed_files is not None
     assert result.least_changed_files is not None
     assert result.file_change_count is not None
+
+
+@pytest.mark.asyncio
+async def test_git_analyzer_parser_error(monkeypatch):
+    config = GitAnalyzerConfig()
+    with pytest.raises(RepoError, match="Path /path/to/nonexistent/repo does not exist"):
+        GitAnalyzer("/path/to/nonexistent/repo", config)
 
 
 @pytest.mark.asyncio
