@@ -125,6 +125,8 @@ class Agent(ABC):
                 tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
                 tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
                 parallel_tool_calls=self.supports_parallel_tool_calls if self.supports_tool_calling and self.tool_schemas else None,
+                top_p=1.0,
+                temperature=1.0,
             )
 
     def _process_response(self, response):
