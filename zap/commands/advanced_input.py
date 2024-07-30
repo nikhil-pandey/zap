@@ -28,7 +28,7 @@ class AdvancedCompleter(Completer):
         self.session = session
 
     def get_completions(
-            self, document: Document, complete_event
+        self, document: Document, complete_event
     ) -> Iterable[Completion]:
         text = document.text
         if text.startswith(("/add ", "/a ")):
@@ -92,10 +92,10 @@ class AdvancedCompleter(Completer):
     @staticmethod
     def _should_include_command(without_slash, command, ratio):
         return (
-                not without_slash
-                or command.startswith(without_slash)
-                or without_slash.strip() == ""
-                or ratio > 80
+            not without_slash
+            or command.startswith(without_slash)
+            or without_slash.strip() == ""
+            or ratio > 80
         )
 
     def get_file_completions(self, prefix: str) -> list[Completion]:
@@ -135,16 +135,14 @@ class AdvancedCompleter(Completer):
 
     @staticmethod
     def _get_relative_path(full_path, directory, is_file):
-        relative_path = full_path[len(directory):].lstrip("/")
+        relative_path = full_path[len(directory) :].lstrip("/")
         return relative_path if is_file else relative_path + "/"
 
 
 class AdvancedInput:
     def __init__(self, registry: CommandRegistry, state: AppState, ui: UIInterface):
         if state.config.command_history_file:
-            self.history = FileHistory(
-                state.config.command_history_file
-            )
+            self.history = FileHistory(state.config.command_history_file)
         else:
             self.history = InMemoryHistory()
         self.completer = ThreadedCompleter(AdvancedCompleter(registry, state, ui))
@@ -170,9 +168,9 @@ class AdvancedInput:
             text = self.session.default_buffer.text.lstrip()
             items = text.split()
             return text.startswith("/") or (
-                    items
-                    and len(items) == 1
-                    and (len(text) < 10 or self.registry.is_command(items[0]))
+                items
+                and len(items) == 1
+                and (len(text) < 10 or self.registry.is_command(items[0]))
             )
 
         @self.kb.add("enter", filter=is_command)

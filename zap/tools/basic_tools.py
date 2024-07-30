@@ -110,6 +110,11 @@ class ListFilesTool(Tool):
         full_path = os.path.join(self.app_state.git_repo.root, directory)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
+        if directory == "./" or directory == "." or directory == "":
+            raise ValueError(
+                "You cannot list all files in the repository. Be more specific."
+            )
+
         files = [
             file
             for file in tracked_files
@@ -207,12 +212,11 @@ class RawShellCommandTool(ShellCommandTool):
         "set",
         "cls",
         "copy",
-        "del",
         "move",
         "ren",
         "mkdir",
-        "rmdir",
         "xcopy",
+        "md",
     ]
 
     def __init__(self, app_state: AppState):

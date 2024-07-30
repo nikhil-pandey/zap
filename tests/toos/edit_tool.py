@@ -20,7 +20,7 @@ class TestEditFileTool(unittest.TestCase):
 
     def create_temp_file(self, content):
         fd, path = tempfile.mkstemp(dir=self.temp_dir, text=True)
-        with os.fdopen(fd, 'w') as temp_file:
+        with os.fdopen(fd, "w") as temp_file:
             temp_file.write(content)
         return os.path.relpath(path, self.temp_dir)
 
@@ -29,16 +29,13 @@ class TestEditFileTool(unittest.TestCase):
         filename = self.create_temp_file(content)
 
         result = await self.edit_file_tool.execute(
-            filename=filename,
-            start_line=2,
-            end_line=2,
-            content="new line2"
+            filename=filename, start_line=2, end_line=2, content="new line2"
         )
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["edited_lines"], "2-2")
 
-        with open(os.path.join(self.temp_dir, filename), 'r') as file:
+        with open(os.path.join(self.temp_dir, filename), "r") as file:
             self.assertEqual(file.read(), "line1\nnew line2\nline3\n")
 
     async def test_replace_multiple_lines(self):
@@ -46,16 +43,13 @@ class TestEditFileTool(unittest.TestCase):
         filename = self.create_temp_file(content)
 
         result = await self.edit_file_tool.execute(
-            filename=filename,
-            start_line=2,
-            end_line=3,
-            content="new line2\nnew line3"
+            filename=filename, start_line=2, end_line=3, content="new line2\nnew line3"
         )
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["edited_lines"], "2-3")
 
-        with open(os.path.join(self.temp_dir, filename), 'r') as file:
+        with open(os.path.join(self.temp_dir, filename), "r") as file:
             self.assertEqual(file.read(), "line1\nnew line2\nnew line3\nline4\n")
 
     async def test_insert_new_line(self):
@@ -63,16 +57,13 @@ class TestEditFileTool(unittest.TestCase):
         filename = self.create_temp_file(content)
 
         result = await self.edit_file_tool.execute(
-            filename=filename,
-            start_line=3,
-            end_line=2,
-            content="new line3"
+            filename=filename, start_line=3, end_line=2, content="new line3"
         )
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["edited_lines"], "3-2")
 
-        with open(os.path.join(self.temp_dir, filename), 'r') as file:
+        with open(os.path.join(self.temp_dir, filename), "r") as file:
             self.assertEqual(file.read(), "line1\nline2\nnew line3\n")
 
     async def test_delete_lines(self):
@@ -80,16 +71,13 @@ class TestEditFileTool(unittest.TestCase):
         filename = self.create_temp_file(content)
 
         result = await self.edit_file_tool.execute(
-            filename=filename,
-            start_line=2,
-            end_line=3,
-            content=""
+            filename=filename, start_line=2, end_line=3, content=""
         )
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["edited_lines"], "2-3")
 
-        with open(os.path.join(self.temp_dir, filename), 'r') as file:
+        with open(os.path.join(self.temp_dir, filename), "r") as file:
             self.assertEqual(file.read(), "line1\nline4\n")
 
     async def test_replace_block_of_code(self):
@@ -98,16 +86,13 @@ class TestEditFileTool(unittest.TestCase):
 
         new_content = "def new_func():\n    print('Hello')\n    return True"
         result = await self.edit_file_tool.execute(
-            filename=filename,
-            start_line=1,
-            end_line=5,
-            content=new_content
+            filename=filename, start_line=1, end_line=5, content=new_content
         )
 
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["edited_lines"], "1-5")
 
-        with open(os.path.join(self.temp_dir, filename), 'r') as file:
+        with open(os.path.join(self.temp_dir, filename), "r") as file:
             self.assertEqual(file.read(), new_content + "\n")
 
     async def test_file_not_found(self):
@@ -116,7 +101,7 @@ class TestEditFileTool(unittest.TestCase):
                 filename="non_existent_file.py",
                 start_line=1,
                 end_line=1,
-                content="new content"
+                content="new content",
             )
 
     async def test_path_outside_repository(self):
@@ -125,9 +110,9 @@ class TestEditFileTool(unittest.TestCase):
                 filename="../outside_repo.py",
                 start_line=1,
                 end_line=1,
-                content="new content"
+                content="new content",
             )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
