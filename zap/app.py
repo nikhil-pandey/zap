@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import os
 import sys
 import time
@@ -12,7 +11,8 @@ from rich.panel import Panel
 from rich.text import Text
 
 from zap.agent_manager import AgentManager
-from zap.agents.base import ChatAgent, Agent
+from zap.agents import ChatAgent
+from zap.agents.base import *
 from zap.agents.chat_message import ChatMessage
 from zap.app_state import AppState
 from zap.cliux import UI
@@ -21,8 +21,8 @@ from zap.config import AppConfig, load_config
 from zap.constants import FILE_ICONS
 from zap.contexts.agent_template_context import build_agent_template_context
 from zap.contexts.context import Context
-from zap.contexts.context_manager import ContextManager
 from zap.contexts.context_command_manager import ContextCommandManager
+from zap.contexts.context_manager import ContextManager
 from zap.git_analyzer import GitAnalyzer
 from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import register_tools

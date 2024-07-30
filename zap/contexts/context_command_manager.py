@@ -40,7 +40,7 @@ class ContextCommandManager:
                     context.name,
                     context.current_agent,
                     str(len(context.messages)),
-                    context.messages[-1].content if context.messages else "",
+                    context.messages[-1].content[:100] + '...' if context.messages else "",
                 ]
                 for context in self.context_manager.contexts.values()
             ],

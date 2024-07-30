@@ -9,18 +9,13 @@ from zap.agents.agent_output import AgentOutput
 from zap.cliux import UIInterface
 from zap.contexts.context import Context
 from zap.templating import ZapTemplateEngine
+from zap.tools.basic_tools import EditFileTool
 from zap.tools.tool import tool_executor
 from zap.tools.tool_manager import ToolManager
 
 
 class Agent(ABC):
-    def __init__(
-        self,
-        config: AgentConfig,
-        tool_manager: ToolManager,
-        ui: UIInterface,
-        engine: ZapTemplateEngine,
-    ):
+    def __init__(self, config: AgentConfig, tool_manager: ToolManager, ui: UIInterface, engine: ZapTemplateEngine):
         self.tool_manager = tool_manager
         self.tool_schemas = []
         self.ui = ui
@@ -36,28 +31,10 @@ class Agent(ABC):
             self.ui.info(f"Loaded {len(self.tool_schemas)} tool schemas")
         self.config = config
         self.engine = engine
-        # self.supports_tool_calling = (
-        #     ModelCapabilities.supports_function_calling(config.provider, config.model)
-        #     and config.tools
-        # )
-        # if not self.supports_tool_calling and config.tools:
-        #     raise ValueError(f"Model {config.model} does not support tool calling")
-        # self.supports_parallel_tool_calls = (
-        #     ModelCapabilities.supports_parallel_function_calling(
-        #         config.provider, config.model
-        #     )
-        #     and config.tools
-        # )
-        # if not self.supports_parallel_tool_calls and config.tools:
-        #     self.ui.warning(
-        #         f"Model {config.model} does not support parallel tool calling"
-        #     )
         self.supports_tool_calling = True
         self.supports_parallel_tool_calls = True
 
-    async def process(
-        self, message: str, context: Context, template_context: dict
-    ) -> AgentOutput:
+    async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
         except BadRequestError as e:
@@ -69,10 +46,7 @@ class Agent(ABC):
             self.ui.exception(ex, f"Failed to process message: {message}")
             raise
 
-    async def _try_process(
-        self, message: str, context: Context, template_context: dict
-    ) -> AgentOutput:
-        # TODO: This is probably going to be duplicate across agents, neet to refactor this
+    async def _try_process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
         messages = []
         for msg in context.messages:
             messages.append(msg.to_agent_output())
@@ -153,19 +127,39 @@ class Agent(ABC):
                 )
                 raise
 
-    async def handle_tool_calls(
-        self, round: int, tool_calls: any
-    ) -> list[dict[str, any]]:
+    async def handle_tool_calls(self, round: int, tool_calls: any) -> list[dict[str, any]]:
         tool_responses = []
+
+        # Do one pass and make sure we have valid tool calls
+        valid_tool_calls = []
+        edit_tool_calls = []
         for tool_call in tool_calls:
+            try:
+                function_name = tool_call.function.name
+                function_args_str = tool_call.function.arguments
+                function_args = json.loads(function_args_str)
+                tool = self.tool_manager.get_tool(function_name)
+                if isinstance(tool, EditFileTool):
+                    edit_tool_calls.append((tool, function_name, function_args, tool_call))
+                else:
+                    valid_tool_calls.append((tool, function_name, function_args, tool_call))
+            except Exception as e:
+                tool_responses.append({
+                    "tool_call_id": tool_call.id,
+                    "role": "tool",
+                    "name": tool_call.function.name,
+                    "content": f"Invalid tool call {tool_call.function.name}: {e}"
+                })
+
+        # order the edit tool calls in descending order ot start line
+        edit_tool_calls.sort(key=lambda x: x[2]["start_line"], reverse=True)
+        valid_tool_calls.extend(edit_tool_calls)
+
+        for tool, function_name, function_args, tool_call in valid_tool_calls:
             self.ui.debug(
-                f"Round {round}: Calling tool {tool_call.function.name} with args {tool_call.function.arguments}"
+                f"Round {round}: Calling tool {function_name} with args {tool_call.function.arguments}"
             )
-            function_name = tool_call.function.name
-            function_args_str = tool_call.function.arguments
-            response = await self.handle_tool_call(
-                function_name, function_args_str, tool_call, tool_responses
-            )
+            response = await self.handle_tool_call(tool, function_args)
             self.ui.debug(f"Tool {function_name} response: {response}")
             tool_responses.append(
                 {
@@ -175,21 +169,8 @@ class Agent(ABC):
                     "content": response,
                 }
             )
-
         return tool_responses
 
     @tool_executor
-    async def handle_tool_call(
-        self, function_name, function_args_str, tool_call, tool_responses
-    ):
-        tool = self.tool_manager.get_tool(function_name)
-        function_args = json.loads(function_args_str)
+    async def handle_tool_call(self, tool, function_args):
         return await tool.execute(**function_args)
-
-
-class ChatAgent(Agent):
-    pass
-
-
-class CodeAgent(Agent):
-    pass
