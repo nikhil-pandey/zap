@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional
 
 import yaml
 
@@ -25,13 +25,21 @@ class AppConfig:
     auto_load_contexts: bool = True
 
 
-def load_config(config_paths: List[Path], args) -> AppConfig:
-    # Load config from files
+def load_config(args) -> AppConfig:
+    # Load config from config.yaml files in the following order:
+    config_paths = [Path.cwd() / "zap_config.yaml"]
+    current_path = config_paths[0].parent
+
+    while current_path != current_path.parent:  # Check if we've reached the root
+        current_path = current_path.parent
+        config_paths.append(current_path / "zap_config.yaml")
+
     config = {}
     for path in config_paths:
         if path.exists():
             with open(path, "r") as f:
                 config.update(yaml.safe_load(f))
+                break
 
     git_analyzer_config = GitAnalyzerConfig.from_dict(
         config.get("git_analyzer_config", dataclasses.asdict(GitAnalyzerConfig()))

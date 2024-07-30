@@ -43,12 +43,7 @@ class ZapApp:
         self.chat_agent: Optional[ChatAgent] = None
 
     async def initialize(self, args):
-        # Load config
-        config_paths = [
-            Path.cwd() / "zap_config.yaml",
-            Path.home() / ".zap" / "config.yaml",
-        ]
-        self.config = load_config(config_paths, args)
+        self.config = load_config(args)
         self.state = AppState()
 
         # Initialize UI
