@@ -36,11 +36,15 @@ async def test_resolve_file_relative_scheme(resolver):
 
 @pytest.mark.asyncio
 async def test_resolve_http(mocker, resolver):
-    url = 'https://example.com'
+    url = "https://example.com"
 
     # Mock aiohttp.ClientSession().get().text() to return "Website content here"
-    mocker.patch('aiohttp.ClientSession.get',
-                 return_value=mocker.AsyncMock(status=200, text=mocker.AsyncMock(return_value="Website content here")))
+    mocker.patch(
+        "aiohttp.ClientSession.get",
+        return_value=mocker.AsyncMock(
+            status=200, text=mocker.AsyncMock(return_value="Website content here")
+        ),
+    )
 
     result = await resolver.resolve_http(url)
     assert result == "Website content here"

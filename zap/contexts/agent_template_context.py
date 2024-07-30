@@ -46,8 +46,14 @@ class AgentTemplateContext:
     repo_metadata: dict  # TODO: refine this further
 
     @classmethod
-    async def build(cls, message: str, context: Context, agent: Agent, state: AppState,
-                    config: AppConfig) -> "AgentTemplateContext":
+    async def build(
+        cls,
+        message: str,
+        context: Context,
+        agent: Agent,
+        state: AppState,
+        config: AppConfig,
+    ) -> "AgentTemplateContext":
         """
         Builds the AgentTemplateContext object.
         """

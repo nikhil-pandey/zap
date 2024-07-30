@@ -235,7 +235,7 @@ class UI(UIInterface):
         inspect(data, methods=methods, title=title)
 
     def syntax_highlight(
-            self, code: str, language: str = "python", line_numbers: bool = True
+        self, code: str, language: str = "python", line_numbers: bool = True
     ):
         """
         Display syntax-highlighted code.
@@ -272,7 +272,9 @@ class UI(UIInterface):
         :return: Live instance.
         """
         return Live(
-            content, console=self.console, refresh_per_second=self.config.live_refresh_per_second
+            content,
+            console=self.console,
+            refresh_per_second=self.config.live_refresh_per_second,
         )
 
     def markdown(self, md_string: str):

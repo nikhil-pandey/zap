@@ -58,15 +58,19 @@ class ZapApp:
         self.state.config = self.config
 
         # Initialize ContextManager and ChatAgent
-        self.template_engine = ZapTemplateEngine(root_path=self.state.git_repo.root,
-                                                 templates_dir=self.config.templates_dir)
+        self.template_engine = ZapTemplateEngine(
+            root_path=self.state.git_repo.root, templates_dir=self.config.templates_dir
+        )
 
         # Initialize Commands
         self.tool_manager = ToolManager()
         register_tools(tool_manager=self.tool_manager, app_state=self.state, ui=self.ui)
         self.agent_manager = AgentManager(
             Path(self.config.templates_dir) / "agents",
-            self.tool_manager, self.ui, self.template_engine)
+            self.tool_manager,
+            self.ui,
+            self.template_engine,
+        )
         default_agent = self.agent_manager.get_agent(self.config.agent)
         self.state.tokenizer = tiktoken.encoding_for_model(default_agent.config.model)
         self.context_manager = ContextManager(self.agent_manager, self.config.agent)
@@ -77,11 +81,17 @@ class ZapApp:
         if self.config.auto_load_contexts:
             if self.context_manager.load_all_contexts():
                 self.ui.print(f"Loaded {len(self.context_manager.contexts)} contexts")
-                self.ui.print(f"Resuming context: {self.context_manager.current_context}")
+                self.ui.print(
+                    f"Resuming context: {self.context_manager.current_context}"
+                )
             else:
                 self.ui.print("No contexts loaded. Starting a 'default' context")
-        self.ccm = ContextCommandManager(self.context_manager, self.ui, self.agent_manager)
-        self.commands = Commands(self.config, self.state, self.ui, self.ccm, self.agent_manager)
+        self.ccm = ContextCommandManager(
+            self.context_manager, self.ui, self.agent_manager
+        )
+        self.commands = Commands(
+            self.config, self.state, self.ui, self.ccm, self.agent_manager
+        )
 
     async def run(self):
         while True:
@@ -90,7 +100,8 @@ class ZapApp:
                 agent = self.agent_manager.get_agent(context.current_agent)
 
                 user_input = await self.commands.advanced_input.input_async(
-                    f"{context.name}:{agent.config.name} {FILE_ICONS['zap']}")
+                    f"{context.name}:{agent.config.name} {FILE_ICONS['zap']}"
+                )
 
                 await self.handle_input(user_input, context, agent)
             except KeyboardInterrupt:
@@ -142,7 +153,7 @@ class ZapApp:
     async def perform_tasks(self, tasks: list[str], parallel: bool):
         if parallel:
             # TODO: needs some work as everything the state management is not thread safe
-           raise NotImplementedError("Parallel task execution is not implemented yet")
+            raise NotImplementedError("Parallel task execution is not implemented yet")
 
         self.ui.print(f"Performing {len(tasks)} tasks")
         final_tasks = []
@@ -160,7 +171,7 @@ class ZapApp:
             final_tasks.append((task, current_tasks))
 
         async_tasks = []
-        for (name, task_group) in final_tasks:
+        for name, task_group in final_tasks:
             async_tasks.append(self._run_task_group(name, task_group))
             if not parallel:
                 await async_tasks[-1]
@@ -186,16 +197,20 @@ class ZapApp:
             await self.chat_async(user_input, context, agent)
 
     async def chat_async(self, user_input: str, context: Context, agent: Agent):
-        template_context = await AgentTemplateContext.build(user_input, context, agent, self.state, self.config)
+        template_context = await AgentTemplateContext.build(
+            user_input, context, agent, self.state, self.config
+        )
         template_context_dict = dataclasses.asdict(template_context)
-        rendered_input = await self.template_engine.render(user_input, template_context_dict)
+        rendered_input = await self.template_engine.render(
+            user_input, template_context_dict
+        )
         output = await agent.process(rendered_input, context, template_context_dict)
 
         for msg in output.message_history:
             chat_message = ChatMessage.from_agent_output(msg, agent.config.name)
-            chat_message.metadata['raw_input'] = user_input
+            chat_message.metadata["raw_input"] = user_input
             if user_input != rendered_input:
-                chat_message.metadata['rendered_input'] = rendered_input
+                chat_message.metadata["rendered_input"] = rendered_input
             context.add_message(chat_message)
         if self.config.auto_persist_contexts:
             self.context_manager.save_context(context.name)

@@ -7,7 +7,12 @@ from zap.cliux import UIInterface
 
 
 class ContextCommandManager:
-    def __init__(self, context_manager: ContextManager, ui: UIInterface, agent_manager: AgentManager):
+    def __init__(
+        self,
+        context_manager: ContextManager,
+        ui: UIInterface,
+        agent_manager: AgentManager,
+    ):
         self.context_manager: ContextManager = context_manager
         self.ui: UIInterface = ui
         self.agent_manager: AgentManager = agent_manager
@@ -32,16 +37,25 @@ class ContextCommandManager:
             "Contexts",
             ["Context", "Agent", "Messages Count", "Last message"],
             [
-                [context.name, context.current_agent, str(len(context.messages)), context.messages[-1].content if context.messages else ""]
+                [
+                    context.name,
+                    context.current_agent,
+                    str(len(context.messages)),
+                    context.messages[-1].content if context.messages else "",
+                ]
                 for context in self.context_manager.contexts.values()
-            ]
+            ],
         )
 
     async def show_current_context(self):
         context = self.context_manager.get_current_context()
         self.ui.print(f"Current context: {context.name}")
         self.ui.print(f"Current agent: {context.current_agent}")
-        self.ui.data_view([m.to_agent_output() for m in context.messages], methods=False, title="Messages")
+        self.ui.data_view(
+            [m.to_agent_output() for m in context.messages],
+            methods=False,
+            title="Messages",
+        )
 
     async def save_context(self):
         current_context = self.context_manager.get_current_context()
@@ -87,7 +101,9 @@ class ContextCommandManager:
         if self.context_manager.rename_context(old_name, new_name):
             self.ui.print(f"Renamed context '{old_name}' to '{new_name}'")
         else:
-            self.ui.error(f"Failed to rename context. Make sure the old name exists and the new name is not taken.")
+            self.ui.error(
+                f"Failed to rename context. Make sure the old name exists and the new name is not taken."
+            )
 
     async def clear_context(self, name: str = None):
         if name is None:
@@ -101,7 +117,9 @@ class ContextCommandManager:
         if self.context_manager.archive_all_contexts(archive_name):
             self.ui.print("All contexts have been archived and cleared.")
         else:
-            self.ui.error("Archive with the same name already exists. Please choose a different name.")
+            self.ui.error(
+                "Archive with the same name already exists. Please choose a different name."
+            )
             await self.list_archived_contexts()
 
     async def list_archived_contexts(self):

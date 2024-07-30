@@ -50,9 +50,9 @@ class UtilityCommands:
                 async with aiofiles.open(os.path.join(root, file), "r") as f:
                     file_content = await f.read()
                 content += (
-                        f"```{ext}\n{comment_start} filename: {file} {comment_end}\n"
-                        + file_content
-                        + f"\n{comment_start} end of {file} {comment_end}\n```\n"
+                    f"```{ext}\n{comment_start} filename: {file} {comment_end}\n"
+                    + file_content
+                    + f"\n{comment_start} end of {file} {comment_end}\n```\n"
                 )
             except Exception as e:
                 self.ui.error(f"Failed to read {file}: {str(e)}")

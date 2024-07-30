@@ -33,7 +33,7 @@ class CommandRegistry:
         return self.is_command(split_text[0])
 
     def is_command(self, name):
-        return name in self.commands or '/' + name in self.commands
+        return name in self.commands or "/" + name in self.commands
 
     def get_all_commands(self, show_hidden=False):
         return [

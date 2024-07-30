@@ -71,7 +71,9 @@ class FileContextManager:
         for path in paths:
             if path.is_file():
                 try:
-                    token_count = len(self.state.tokenizer.encode(path.read_text(encoding='utf-8')))
+                    token_count = len(
+                        self.state.tokenizer.encode(path.read_text(encoding="utf-8"))
+                    )
                     total += token_count
                 except Exception as e:
                     self.ui.error(f"Error reading file {path}: {e}")
@@ -87,7 +89,7 @@ class FileContextManager:
         for path in paths:
             if path.is_file():
                 branch = self._get_or_create_branch(path.parent, branches, branch_sizes)
-                icon = FILE_ICONS.get(path.suffix.lstrip('.'), FILE_ICONS['default'])
+                icon = FILE_ICONS.get(path.suffix.lstrip("."), FILE_ICONS["default"])
                 text_filename = Text(f"{icon} {path.name}", "green")
                 text_filename.highlight_regex(r"\..*$", "bold red")
                 text_filename.stylize(f"link file://{path}")
@@ -97,12 +99,18 @@ class FileContextManager:
 
         self.ui.raw(root)
 
-    def _get_or_create_branch(self, path: pathlib.Path, branches: dict[pathlib.Path, Tree],
-                              branch_sizes: dict[pathlib.Path, int]) -> Tree:
+    def _get_or_create_branch(
+        self,
+        path: pathlib.Path,
+        branches: dict[pathlib.Path, Tree],
+        branch_sizes: dict[pathlib.Path, int],
+    ) -> Tree:
         if path in branches:
             return branches[path]
         else:
-            parent_branch = self._get_or_create_branch(path.parent, branches, branch_sizes)
+            parent_branch = self._get_or_create_branch(
+                path.parent, branches, branch_sizes
+            )
             token_count = branch_sizes[path]
             label = f"{FILE_ICONS['dir']} {path.name}"
             if token_count > 0:

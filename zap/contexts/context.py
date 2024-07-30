@@ -28,7 +28,7 @@ class Context:
             "messages": [msg.to_dict() for msg in self.messages],
             "created_at": self.created_at.isoformat(),
             "last_accessed": self.last_accessed.isoformat(),
-            "filename": self.filename
+            "filename": self.filename,
         }
 
     @classmethod
@@ -38,7 +38,7 @@ class Context:
             current_agent=data["current_agent"],
             created_at=datetime.fromisoformat(data["created_at"]),
             last_accessed=datetime.fromisoformat(data["last_accessed"]),
-            filename=data.get("filename")
+            filename=data.get("filename"),
         )
         context.messages = [ChatMessage.from_dict(msg) for msg in data["messages"]]
         return context

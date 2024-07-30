@@ -24,12 +24,8 @@ class ToolManager:
             "function": {
                 "name": tool.name,
                 "description": tool.description,
-                "parameters": {
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            }
+                "parameters": {"type": "object", "properties": {}, "required": []},
+            },
         }
 
         execute_method = tool.execute
@@ -37,7 +33,7 @@ class ToolManager:
         type_hints = get_type_hints(execute_method, include_extras=True)
 
         for param_name, param in signature.parameters.items():
-            if param_name == 'self':
+            if param_name == "self":
                 continue
 
             param_schema = {"type": "string"}  # Default to string if no annotation

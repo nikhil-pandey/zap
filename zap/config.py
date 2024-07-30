@@ -45,15 +45,18 @@ def load_config(args) -> AppConfig:
         config.get("git_analyzer_config", dataclasses.asdict(GitAnalyzerConfig()))
     )
 
-    ui_config = UIConfig.from_dict(config.get("ui_config", dataclasses.asdict(UIConfig())))
+    ui_config = UIConfig.from_dict(
+        config.get("ui_config", dataclasses.asdict(UIConfig()))
+    )
 
     config.pop("git_analyzer_config", None)
     config.pop("ui_config", None)
-    config['verbose'] = args.verbose or config.get("verbose", False)
+    config["verbose"] = args.verbose or config.get("verbose", False)
     ui_config.verbose = args.verbose or ui_config.verbose
-    config['agent'] = args.agent or config.get("agent", "chat")
-    config['templates_dir'] = args.templates_dir or config.get("templates_dir",
-                                                               str(Path(__file__).parent / "templates"))
+    config["agent"] = args.agent or config.get("agent", "chat")
+    config["templates_dir"] = args.templates_dir or config.get(
+        "templates_dir", str(Path(__file__).parent / "templates")
+    )
     return AppConfig(
         ui_config=ui_config,
         git_analyzer_config=git_analyzer_config,
