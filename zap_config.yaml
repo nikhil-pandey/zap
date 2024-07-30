@@ -22,3 +22,4 @@ ui_config:
   theme: default
   verbose: true
 verbose: true
+command_history_file: C:\Users\nikhi\.zap\command_history.log
