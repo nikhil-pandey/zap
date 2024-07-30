@@ -7,7 +7,13 @@ from zap.tools.tool_manager import ToolManager
 
 
 class AgentManager:
-    def __init__(self, config_dir: Path, tool_manager: ToolManager, ui: UIInterface, engine: ZapTemplateEngine):
+    def __init__(
+        self,
+        config_dir: Path,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
+    ):
         self.tool_manager = tool_manager
         self.ui = ui
         self.engine = engine
@@ -15,12 +21,17 @@ class AgentManager:
         self.load_agents(config_dir)
 
     def load_agents(self, config_dir: Path):
-        for config_file in config_dir.glob('*.yaml'):
-            with open(config_file, 'r') as f:
+        for config_file in config_dir.glob("*.yaml"):
+            with open(config_file, "r") as f:
                 config_dict = yaml.safe_load(f)
                 config = AgentConfig(**config_dict)
                 agent_class = globals()[config.type]
-                agent = agent_class(config, tool_manager=self.tool_manager, ui=self.ui, engine=self.engine)
+                agent = agent_class(
+                    config,
+                    tool_manager=self.tool_manager,
+                    ui=self.ui,
+                    engine=self.engine,
+                )
                 self.agents[config.name] = agent
 
     def get_agent(self, name: str) -> Agent:

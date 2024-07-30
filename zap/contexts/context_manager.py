@@ -11,7 +11,9 @@ from zap.contexts.context import Context
 class ContextManager:
     def __init__(self, agent_manager: AgentManager, default_agent: str):
         self.default_agent = default_agent
-        self.contexts: Dict[str, Context] = {"default": Context(name="default", current_agent=default_agent)}
+        self.contexts: Dict[str, Context] = {
+            "default": Context(name="default", current_agent=default_agent)
+        }
         self.current_context: str = "default"
         self.agent_manager = agent_manager
         self.contexts_dir = Path.home() / ".zap" / "contexts"
@@ -29,14 +31,14 @@ class ContextManager:
             if not context.filename:
                 context.filename = self._generate_filename()
             file_path = self.contexts_dir / context.filename
-            with open(file_path, 'w') as f:
+            with open(file_path, "w") as f:
                 json.dump(context.to_dict(), f)
 
     def load_all_contexts(self):
         count = 0
         for file in self.contexts_dir.glob("context_*.json"):
             count += 1
-            with open(file, 'r') as f:
+            with open(file, "r") as f:
                 data = json.load(f)
                 context = Context.from_dict(data)
                 self.contexts[context.name] = context
@@ -45,7 +47,7 @@ class ContextManager:
     def load_context(self, file_name: str) -> Optional[Context]:
         file_path = self.contexts_dir / file_name
         if file_path.exists():
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 data = json.load(f)
                 context = Context.from_dict(data)
                 self.contexts[context.name] = context
@@ -76,9 +78,9 @@ class ContextManager:
         context_files = list(self.contexts_dir.glob("context_*.json"))
         context_info = []
         for file in context_files:
-            with open(file, 'r') as f:
+            with open(file, "r") as f:
                 data = json.load(f)
-                context_name = data.get('name', 'Unknown')
+                context_name = data.get("name", "Unknown")
                 timestamp = datetime.strptime(file.stem[8:], "%Y%m%d_%H%M%S")
                 context_info.append((context_name, timestamp, file.name))
         return sorted(context_info, key=lambda x: x[1], reverse=True)
@@ -125,7 +127,9 @@ class ContextManager:
             shutil.move(str(file), str(archive_path))
 
         self.contexts.clear()
-        self.contexts["default"] = Context(name="default", current_agent=self.default_agent)
+        self.contexts["default"] = Context(
+            name="default", current_agent=self.default_agent
+        )
         self.current_context = "default"
         return True
 
@@ -138,7 +142,7 @@ class ContextManager:
         if folder.exists():
             for file in folder.glob("context_*.json"):
                 if file.exists():
-                    with open(file.resolve(), 'r') as f:
+                    with open(file.resolve(), "r") as f:
                         data = json.load(f)
                         context = Context.from_dict(data)
                         self.contexts[context.name] = context

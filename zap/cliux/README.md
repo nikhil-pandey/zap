@@ -1,112 +1,182 @@
-# CLIUX
+# cliux Module Documentation
 
-CLIUX allows you to customize various aspects of the UI through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `Config` dataclass instance.
-
-## Features
-
-- Rich console output with syntax highlighting, tables, and panels
-- Interactive prompts for various types of user input
-- Asynchronous input handling
-- Input logging to a history file
-- Background exporting of console output to HTML, SVG, and text formats
-- Progress bars and spinners for long-running tasks
-- Markdown rendering in the console
-- File tree visualization
-- Exception handling with rich tracebacks
-- Customizable configuration through dictionary or file input
-
-## Configuration
-
-CLIUX allows you to customize various aspects of the UI through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `Config` dataclass instance.
-
-### Example Configuration
-
-Here's an example of how the configuration might look in different formats:
-
-#### JSON
-```json
-{
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
-    "verbose": true
-}
-```
-
-#### YAML
-```yaml
-theme: monokai
-history_file: my_history.log
-panel_border_style: bold magenta
-table_header_style: bold blue
-spinner_type: line
-live_refresh_per_second: 5
-verbose: true
-```
-
-#### TOML
-```toml
-theme = "monokai"
-history_file = "my_history.log"
-panel_border_style = "bold magenta"
-table_header_style = "bold blue"
-spinner_type = "line"
-live_refresh_per_second = 5
-verbose = true
-```
-
-## Usage
-
-Here's a basic example of how to use CLIUX with configuration:
+## Quick Start
+Here’s how to quickly get started with the `cliux` module:
 
 ```python
-import asyncio
 from zap.cliux import UI, Config
 
-# Example configuration dictionary
-config = {
-    "theme": "monokai",
-    "history_file": "my_history.log",
-    "panel_border_style": "bold magenta",
-    "table_header_style": "bold blue",
-    "spinner_type": "line",
-    "live_refresh_per_second": 5,
+# Basic configuration dictionary
+config_dict = {
+    "theme": "default",
     "verbose": True
 }
 
+# Initialize the UI component
+ui = UI(config_dict)
+
+# Print an info message
+ui.info("Hello, welcome to zap CLI!")
+
+# Display a table
+columns = ["Name", "Age"]
+rows = [["Alice", 30], ["Bob", 25]]
+ui.table(title="User Data", columns=columns, rows=rows)
+
+# Display a spinner
+with ui.spinner("Processing..."):
+    import time
+    time.sleep(2)
+```
+
+## Core Concepts
+
+### UI Interface
+The `UIInterface` class defines the expected methods that any UI implementation must provide. It includes methods for logging, displaying tables and panels, and more. Below is an example of how you might create a custom UI by extending this class.
+
+```python
+class CustomUI(UIInterface):
+    def raw(self, obj: any):
+        print(obj)
+
+    def print(self, *args, **kwargs):
+        print(*args, **kwargs)
+
+    # Implement other required methods...
+```
+
+### Configuration
+`Config` is a dataclass that holds the configuration settings of the UI component. You can load this configuration from a dictionary, JSON, YAML, or TOML file.
+
+```python
+config = Config.from_file("config.toml")
 ui = UI(config)
+```
 
-async def main():
-    ui.panel("Welcome to CLIUX Demo", title="Hello")
-    
-    with ui.spinner("Processing data"):
-        await asyncio.sleep(2)
-    
-    ui.info("Data processing complete")
-    
-    table_data = [
-        {"Name": "Alice", "Age": "25", "Role": "Engineer"},
-        {"Name": "Bob", "Age": "30", "Role": "Designer"},
-        {"Name": "Charlie", "Age": "35", "Role": "Manager"}
-    ]
-    ui.display_table("Employee Data", table_data)
-    
-    code = "print('Hello, World!')"
-    ui.syntax_highlight(code, "python")
+## Examples and Use Cases
 
-    ui.tree(["/home/user/documents", "/home/user/downloads", "/home/user/pictures"])
+### Displaying Rich Tables
 
-    component = Panel(...)
-    with ui.live_output(component) as live:
-        for i in range(10):
-            live.update(f"Updating live output: {i}")
-            await asyncio.sleep(0.5)
+```python
+columns = ["ID", "Name", "Age"]
+rows = [
+    ["1", "Alice", "29"],
+    ["2", "Bob", "34"]
+]
 
-    await ui.export_async("output.html", "html")
+ui.table("User Information", columns, rows)
+```
 
-if __name__ == "__main__":
-    asyncio.run(main())
+### Logging Messages
+Log messages at different levels such as `info`, `debug`, `warning`, `error`, and `exception`.
+
+```python
+ui.info("This is an info message")
+ui.warning("This is a warning message")
+ui.error("This is an error message")
+```
+
+### Exporting Outputs
+Export console outputs to different formats:
+
+```python
+ui.export_html("output.html")
+ui.export_svg("output.svg")
+ui.export_text("output.txt")
+```
+
+### Using Spinner for Long-running Tasks
+
+```python
+with ui.spinner("Loading..."):
+    time.sleep(3)
+```
+
+### Displaying Syntax Highlighted Code
+
+```python
+code_snippet = '''
+def hello_world():
+    print("Hello, world!")
+'''
+
+ui.syntax_highlight(code_snippet, language="python")
+```
+
+## Configuration
+
+### Example Configuration
+```toml
+# config.toml
+theme = "monokai"
+history_file = "command_history.log"
+panel_border_style = "bold"
+table_header_style = "bold magenta"
+spinner_type = "dots"
+live_refresh_per_second = 4
+syntax_theme = "monokai"
+verbose = true
+```
+
+### Loading Configuration from File
+```python
+config = Config.from_file("config.toml")
+ui = UI(config)
+```
+
+### Loading Configuration from Dictionary
+```python
+config_dict = {
+    "theme": "default",
+    "verbose": True,
+}
+config = Config.from_dict(config_dict)
+ui = UI(config)
+```
+
+## Troubleshooting
+
+### Common Issues
+
+**Error**: Unsupported file format while loading configuration.
+- **Solution**: Ensure the configuration file is either `.json`, `.yaml`, or `.toml`.
+
+**Error**: Unknown theme specified.
+- **Solution**: Use one of the predefined themes or ensure your custom theme is correctly defined.
+
+### Example Error Messages and Resolutions
+```python
+try:
+    config = Config.from_file("unknown_format.txt")
+except ValueError as e:
+    print(e)
+    # Output: Unsupported file format. Use JSON, YAML, or TOML.
+```
+
+## Extending the Module
+
+### Adding a new Theme
+
+```python
+ui.KNOWN_THEMES["dracula"] = {
+    "default": "purple",
+    "dim": "dim purple",
+    # Add more style mappings
+}
+```
+
+### Custom UI Implementation
+Create a custom implementation of the `UIInterface` to add new behavior.
+
+```python
+class CustomUI(UIInterface):
+    def raw(self, obj: any):
+        # Custom raw object printing
+        print("Raw object:", obj)
+        
+    def print(self, *args, **kwargs):
+        # Custom print method
+        print("Custom print:", *args)
+
+    # Implement other required methods...
 ```

@@ -50,16 +50,18 @@ class UtilityCommands:
                 async with aiofiles.open(os.path.join(root, file), "r") as f:
                     file_content = await f.read()
                 content += (
-                        f"```{ext}\n{comment_start} filename: {file} {comment_end}\n"
-                        + file_content
-                        + f"\n{comment_start} end of {file} {comment_end}\n```\n"
+                    f"```{ext}\n{comment_start} filename: {file} {comment_end}\n"
+                    + file_content
+                    + f"\n{comment_start} end of {file} {comment_end}\n```\n"
                 )
             except Exception as e:
                 self.ui.error(f"Failed to read {file}: {str(e)}")
 
         try:
             pyperclip.copy(content)
-            encoded = self.state.tokenizer.encode(content)
+            encoded = (
+                self.state.tokenizer.encode(content) if self.state.tokenizer else []
+            )
             self.ui.print(f"Copied {len(encoded)} tokens to clipboard.")
         except Exception as e:
             self.ui.error(f"Failed to copy to clipboard: {str(e)}")

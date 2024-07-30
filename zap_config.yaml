@@ -1,0 +1,24 @@
+agent: chat
+auto_archive_contexts: true
+auto_load_contexts: true
+auto_persist_contexts: true
+build_command: poetry build
+lint_command: powershell scripts/lint.ps1
+test_command: powershell scripts/test_with_coverage.ps1
+dependency_manager: null
+git_analyzer_config:
+  commit_limit: 10
+  least_changed_files_limit: 10
+  log_level: INFO
+  most_changed_files_limit: 10
+templates_dir: C:\Users\nikhi\RiderProjects\zapfinal\zap\templates
+ui_config:
+  history_file: command_history.log
+  live_refresh_per_second: 4
+  panel_border_style: bold
+  spinner_type: dots
+  syntax_theme: monokai
+  table_header_style: bold magenta
+  theme: default
+  verbose: true
+verbose: true

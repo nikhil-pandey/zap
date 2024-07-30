@@ -1,16 +1,19 @@
+import pytest
 import os
 
-import pytest
 
-from zap.templating.default_resolver import DefaultPathResolver
-from zap.templating.engine import ZapTemplateEngine
+@pytest.fixture
+async def template_engine():
+    from zap.templating.engine import ZapTemplateEngine
+
+    return ZapTemplateEngine()
 
 
 @pytest.fixture
-def engine():
-    return ZapTemplateEngine({}, os.getcwd())
-
-
-@pytest.fixture
-def resolver():
-    return DefaultPathResolver(os.getcwd())
+async def setup_file_system():
+    file_path = "greeting.txt"
+    with open(file_path, "w") as f:
+        f.write("Hello, {{ name }}!")
+    yield
+    if os.path.exists(file_path):
+        os.remove(file_path)

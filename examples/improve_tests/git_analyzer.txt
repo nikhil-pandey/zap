@@ -1,0 +1,8 @@
+/switch_context GitAnalyzerTests
+/switch_agent code
+/drop
+/add zap/git_analyzer tests/git_analyzer CONVENTIONS.md
+/ls
+You are tasked with writing tests for the GitAnalyzer submodule. We already have some coverage. Code might have changed since the last time we checked. Please make sure to cover all the new code paths. Also feel free to delete old tests that are no longer needed. Make sure to run the tests locally before pushing them to the repository. Go thorugh the code now, and come up with a plan. DO NOT STAT WRITING TESTS YET.
+Go over your solution, reflect on your solution and come up with a plan. DO NOT START WRITING TESTS YET.
+Now start implementing your tests. Make sure to make the changes then run the test tool to make sure things work. DO NOT OUTPUT ANYTHING. USE TOOLS TO MAKE CHANGES AND RUN TESTS.

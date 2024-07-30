@@ -15,15 +15,15 @@ flask = "==1.1.2"
 pytest = ">=5.0.0"
 """
     parser = PipfileParser()
-    result = await parser.parse(content, 'Pipfile')
+    result = await parser.parse(content, "Pipfile")
 
     assert result.language == Language.PYTHON
     assert result.package_manager == PackageManager.PIPENV
-    assert 'requests' in result.dependencies
-    assert 'flask' in result.dependencies
-    assert 'pytest' in result.dependencies
+    assert "requests" in result.dependencies
+    assert "flask" in result.dependencies
+    assert "pytest" in result.dependencies
     assert len(result.dependencies) == 3
-    assert 'Pipfile' in result.config_files
+    assert "Pipfile" in result.config_files
 
 
 @pytest.mark.asyncio
@@ -34,7 +34,7 @@ async def test_pipfile_parser_empty():
 [dev-packages]
 """
     parser = PipfileParser()
-    result = await parser.parse(content, 'Pipfile')
+    result = await parser.parse(content, "Pipfile")
 
     assert result.language == Language.PYTHON
     assert result.package_manager == PackageManager.PIPENV
@@ -46,4 +46,4 @@ async def test_pipfile_parser_invalid():
     content = "This is not a valid TOML file"
     parser = PipfileParser()
     with pytest.raises(ValueError):
-        await parser.parse(content, 'Pipfile')
+        await parser.parse(content, "Pipfile")

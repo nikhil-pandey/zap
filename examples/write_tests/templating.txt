@@ -1,0 +1,8 @@
+/switch_context TemplatingTestsGeneration
+/switch_agent code
+/drop
+/add zap/templating tests
+/ls
+Analyze the zap/templating module and existing tests. Identify areas that need new or updated test coverage using the testing tool. Develop a comprehensive testing strategy. DO NOT WRITE TESTS YET.
+Review your analysis and testing strategy. Prioritize test cases and consider edge cases. Refine your plan as needed. DO NOT START WRITING TESTS YET.
+Begin implementing tests according to your plan. Make incremental changes and use the test runner after each significant addition or modification. Verify that new tests pass and existing tests are not broken. DO NOT OUTPUT TEST CODE DIRECTLY. USE APPROPRIATE TOOLS TO MAKE CHANGES AND RUN TESTS. DO NOT QUIT UNTIL YOU ARE AT LEAST 90% TEST COVERAGE. YOU WILL BE JUDGED BASED ON THE QUALITY OF YOUR TESTS.

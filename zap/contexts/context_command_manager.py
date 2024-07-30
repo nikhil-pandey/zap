@@ -7,7 +7,12 @@ from zap.cliux import UIInterface
 
 
 class ContextCommandManager:
-    def __init__(self, context_manager: ContextManager, ui: UIInterface, agent_manager: AgentManager):
+    def __init__(
+        self,
+        context_manager: ContextManager,
+        ui: UIInterface,
+        agent_manager: AgentManager,
+    ):
         self.context_manager: ContextManager = context_manager
         self.ui: UIInterface = ui
         self.agent_manager: AgentManager = agent_manager
@@ -28,31 +33,29 @@ class ContextCommandManager:
 
     async def list_contexts(self):
         contexts = self.context_manager.list_contexts()
-        table = Table(show_lines=True, show_header=True, header_style="bold magenta")
-        table.add_column("Context", style="dim", width=15)
-        table.add_column("Agent", style="dim", width=15)
-        table.add_column("Messages Count", style="dim", width=10)
-        table.add_column("Last message", style="dim", width=60)
-        table.title = "Messages"
-        for context_name in contexts:
-            context = self.context_manager.contexts[context_name]
-            other_agents = set([
-                message.agent for message in context.messages if message.agent != context.current_agent
-            ])
-            other = (f" ({', '.join(other_agents)})" if other_agents else "")
-            table.add_row(
-                context.name if context.name != context.current_agent else FILE_ICONS['zap'] + context.name,
-                context.current_agent + other,
-                str(len(context.messages)) if context.messages else "",
-                f"{context.messages[-1].agent}: {context.messages[-1].content}" if context.messages else "",
-            )
-        self.ui.print(table)
+        self.ui.table(
+            "Contexts",
+            ["Context", "Agent", "Messages Count", "Last message"],
+            [
+                [
+                    context.name,
+                    context.current_agent,
+                    str(len(context.messages)),
+                    context.messages[-1].content if context.messages else "",
+                ]
+                for context in self.context_manager.contexts.values()
+            ],
+        )
 
     async def show_current_context(self):
         context = self.context_manager.get_current_context()
         self.ui.print(f"Current context: {context.name}")
         self.ui.print(f"Current agent: {context.current_agent}")
-        self.ui.data_view([m.to_agent_output() for m in context.messages], methods=False, title="Messages")
+        self.ui.data_view(
+            [m.to_agent_output() for m in context.messages],
+            methods=False,
+            title="Messages",
+        )
 
     async def save_context(self):
         current_context = self.context_manager.get_current_context()
@@ -98,7 +101,9 @@ class ContextCommandManager:
         if self.context_manager.rename_context(old_name, new_name):
             self.ui.print(f"Renamed context '{old_name}' to '{new_name}'")
         else:
-            self.ui.error(f"Failed to rename context. Make sure the old name exists and the new name is not taken.")
+            self.ui.error(
+                f"Failed to rename context. Make sure the old name exists and the new name is not taken."
+            )
 
     async def clear_context(self, name: str = None):
         if name is None:
@@ -112,7 +117,9 @@ class ContextCommandManager:
         if self.context_manager.archive_all_contexts(archive_name):
             self.ui.print("All contexts have been archived and cleared.")
         else:
-            self.ui.error("Archive with the same name already exists. Please choose a different name.")
+            self.ui.error(
+                "Archive with the same name already exists. Please choose a different name."
+            )
             await self.list_archived_contexts()
 
     async def list_archived_contexts(self):

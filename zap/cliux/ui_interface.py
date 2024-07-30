@@ -4,6 +4,10 @@ from typing import Any
 
 class UIInterface(ABC):
     @abstractmethod
+    def raw(self, obj: any):
+        pass
+
+    @abstractmethod
     def print(self, *args, **kwargs):
         pass
 
@@ -87,4 +91,8 @@ class UIInterface(ABC):
 
     @abstractmethod
     async def export_async(self, filename: str, fmt: str = "text"):
+        pass
+
+    @abstractmethod
+    async def input_async(self, prompt: str) -> str:
         pass

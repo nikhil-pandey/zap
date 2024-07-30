@@ -1,0 +1,6 @@
+name: documentation
+type: ChatAgent
+system_prompt: prompts/documentation/system.j2
+tools:
+  - read_file
+  - write_file

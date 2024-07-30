@@ -18,12 +18,12 @@ from zap.contexts.context_command_manager import ContextCommandManager
 
 class Commands:
     def __init__(
-            self,
-            config: AppConfig,
-            state: AppState,
-            ui: UIInterface,
-            ccm: ContextCommandManager,
-            agent_manager: AgentManager,
+        self,
+        config: AppConfig,
+        state: AppState,
+        ui: UIInterface,
+        ccm: ContextCommandManager,
+        agent_manager: AgentManager,
     ):
         self.config = config
         self.state = state
@@ -91,14 +91,16 @@ class Commands:
             "list_contexts", aliases=["c"], description="List all available contexts"
         )(self.ccm.list_contexts)
         self.registry.command(
-            "visualize_context", aliases=["viz"], description="Show current context and agent"
+            "visualize_context",
+            aliases=["viz"],
+            description="Show current context and agent",
         )(self.ccm.show_current_context)
-        self.registry.command(
-            "save_context", description="Save the current context"
-        )(self.ccm.save_context)
-        self.registry.command(
-            "load_contexts", description="Load all saved contexts"
-        )(self.ccm.load_all_contexts)
+        self.registry.command("save_context", description="Save the current context")(
+            self.ccm.save_context
+        )
+        self.registry.command("load_contexts", description="Load all saved contexts")(
+            self.ccm.load_all_contexts
+        )
         self.registry.command(
             "list_saved", aliases=["lsc"], description="List all saved contexts"
         )(self.ccm.list_saved_contexts)
@@ -112,20 +114,22 @@ class Commands:
             "clear_context", aliases=["clc"], description="Clear messages in a context"
         )(self.ccm.clear_context)
         self.registry.command(
-            "switch_agent", aliases=["sa"], description="Switch to a different agent in the current context"
+            "switch_agent",
+            aliases=["sa"],
+            description="Switch to a different agent in the current context",
         )(self.ccm.switch_agent)
         self.registry.command(
             "list_agents", aliases=["la"], description="List all available agents"
         )(self.ccm.list_agents)
-        self.registry.command(
-            "archive_context", description="Archive all contexts"
-        )(self.ccm.archive_all_contexts)
+        self.registry.command("archive_context", description="Archive all contexts")(
+            self.ccm.archive_all_contexts
+        )
         self.registry.command(
             "list_archives", aliases=["laa"], description="List all archived contexts"
         )(self.ccm.list_archived_contexts)
-        self.registry.command(
-            "load_archived", description="Load an archived context"
-        )(self.ccm.load_archived_context)
+        self.registry.command("load_archived", description="Load an archived context")(
+            self.ccm.load_archived_context
+        )
 
         # Help and exit commands
         self.registry.command(
@@ -142,15 +146,21 @@ class Commands:
             if cmd_func:
                 # Get the number of required arguments for the command
                 sig = inspect.signature(cmd_func)
-                required_args = sum(1 for param in sig.parameters.values() if
-                                    param.default == param.empty and param.kind != param.VAR_POSITIONAL)
+                required_args = sum(
+                    1
+                    for param in sig.parameters.values()
+                    if param.default == param.empty
+                    and param.kind != param.VAR_POSITIONAL
+                )
 
                 if len(args) < required_args:
                     # If there are not enough arguments, show an error message
                     self.ui.error(
-                        f"Not enough arguments for command '{command}'. Expected {required_args}, got {len(args)}.")
+                        f"Not enough arguments for command '{command}'. Expected {required_args}, got {len(args)}."
+                    )
                     self.ui.print(
-                        f"Usage: {command} {' '.join(param.name for param in sig.parameters.values() if param.default == param.empty and param.kind != param.VAR_POSITIONAL)}")
+                        f"Usage: {command} {' '.join(param.name for param in sig.parameters.values() if param.default == param.empty and param.kind != param.VAR_POSITIONAL)}"
+                    )
                 else:
                     await cmd_func(*args)
             else:

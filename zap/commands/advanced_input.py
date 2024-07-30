@@ -22,7 +22,9 @@ class AdvancedCompleter(Completer):
     def set_session(self, session):
         self.session = session
 
-    def get_completions(self, document: Document, complete_event) -> Iterable[Completion]:
+    def get_completions(
+        self, document: Document, complete_event
+    ) -> Iterable[Completion]:
         text = document.text
         if text.startswith(("/add ", "/a ")):
             return self._get_file_completions(text)
@@ -42,9 +44,18 @@ class AdvancedCompleter(Completer):
         path_to_complete = self._get_last_word(text)
         files = self.state.get_files()
         if not files:
-            return [Completion("No files to remove", start_position=-len(path_to_complete), display_meta="Error")]
-        return [Completion(file, start_position=-len(path_to_complete)) for file in files if
-                file.startswith(path_to_complete)]
+            return [
+                Completion(
+                    "No files to remove",
+                    start_position=-len(path_to_complete),
+                    display_meta="Error",
+                )
+            ]
+        return [
+            Completion(file, start_position=-len(path_to_complete))
+            for file in files
+            if file.startswith(path_to_complete)
+        ]
 
     def _get_command_completions(self, text):
         self._set_complete_style(CompleteStyle.COLUMN)
@@ -54,8 +65,14 @@ class AdvancedCompleter(Completer):
             ratio = fuzz.partial_ratio(without_slash, command["Command"])
             if self._should_include_command(without_slash, command["Command"], ratio):
                 heapq.heappush(heap, (-ratio, (command["Command"], command)))
-        return [Completion(cmd["Command"], start_position=-len(text), display_meta=cmd["Description"]) for _, (_, cmd)
-                in heap]
+        return [
+            Completion(
+                cmd["Command"],
+                start_position=-len(text),
+                display_meta=cmd["Description"],
+            )
+            for _, (_, cmd) in heap
+        ]
 
     def _set_complete_style(self, style):
         if self.session:
@@ -63,11 +80,18 @@ class AdvancedCompleter(Completer):
 
     @staticmethod
     def _get_last_word(text):
-        return text.split()[-1] if len(text.split()) > 1 and not text.endswith(" ") else ""
+        return (
+            text.split()[-1] if len(text.split()) > 1 and not text.endswith(" ") else ""
+        )
 
     @staticmethod
     def _should_include_command(without_slash, command, ratio):
-        return not without_slash or command.startswith(without_slash) or without_slash.strip() == "" or ratio > 80
+        return (
+            not without_slash
+            or command.startswith(without_slash)
+            or without_slash.strip() == ""
+            or ratio > 80
+        )
 
     def get_file_completions(self, prefix: str) -> list[Completion]:
         completions = []
@@ -77,9 +101,13 @@ class AdvancedCompleter(Completer):
             try:
                 full_path = path_conv(path)
                 if full_path.startswith(prefix):
-                    relative_path = self._get_relative_path(full_path, directory, value is not None)
+                    relative_path = self._get_relative_path(
+                        full_path, directory, value is not None
+                    )
                     if relative_path.startswith(partial_name):
-                        completions.append(Completion(relative_path, start_position=-len(partial_name)))
+                        completions.append(
+                            Completion(relative_path, start_position=-len(partial_name))
+                        )
                     return list(children) if value is None else []
                 elif os.path.commonprefix([full_path, prefix]) == full_path:
                     return list(children)
@@ -102,7 +130,7 @@ class AdvancedCompleter(Completer):
 
     @staticmethod
     def _get_relative_path(full_path, directory, is_file):
-        relative_path = full_path[len(directory):].lstrip("/")
+        relative_path = full_path[len(directory) :].lstrip("/")
         return relative_path if is_file else relative_path + "/"
 
 
@@ -131,18 +159,21 @@ class AdvancedInput:
         def is_command():
             text = self.session.default_buffer.text.lstrip()
             items = text.split()
-            return (text.startswith("/") or
-                    (items and len(items) == 1 and (len(text) < 10 or self.registry.is_command(items[0]))))
+            return text.startswith("/") or (
+                items
+                and len(items) == 1
+                and (len(text) < 10 or self.registry.is_command(items[0]))
+            )
 
-        @self.kb.add('enter', filter=is_command)
+        @self.kb.add("enter", filter=is_command)
         def handle_command(event):
             event.current_buffer.validate_and_handle()
 
-        @self.kb.add('enter', filter=~is_command)
+        @self.kb.add("enter", filter=~is_command)
         def insert_newline(event):
             event.current_buffer.newline()
 
-        @self.kb.add('c-d')
+        @self.kb.add("c-d")
         def exit_or_submit(event):
             if not event.current_buffer.text:
                 event.app.exit()

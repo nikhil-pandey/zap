@@ -1,96 +1,218 @@
-# Git Analyzer
+# zap Git Analyzer Documentation
 
-Git Analyzer is a powerful Python library for analyzing Git repositories. It provides insights into project structure, dependencies, commit history, and file changes.
+## Quick Start
 
-## Features
+Get started with the zap Git Analyzer to perform a comprehensive exploration of a Git repository.
 
-- Analyze project structure and dependencies
-- Examine commit history
-- Identify most and least changed files
-- Get current Git status
-- Customizable analysis depth and focus
-- Support for various configuration file formats (JSON, YAML, TOML)
+1. **Set Up the Environment**: Install dependencies using Poetry.
+    ```bash
+    poetry install
+    ```
 
-## Configuration
+2. **Run the Analyzer**: Use the provided script to analyze your repository.
+    ```bash
+    python -m zap.git_analyzer.analyze_repo /path/to/your/git/repository
+    ```
 
-Git Analyzer allows you to customize various aspects of the analysis through configuration settings. You can provide the configuration as a dictionary, a file path (JSON, YAML, TOML), or a `GitAnalyzerConfig` dataclass instance.
+   This command will analyze the specified Git repository and print the exploration results.
 
-### Example Configuration
+## Core Concepts
 
-Here's an example of how the configuration might look in different formats:
+### GitRepo
 
-#### JSON
-```json
-{
-    "commit_limit": 20,
-    "most_changed_files_limit": 15,
-    "least_changed_files_limit": 15,
-    "log_level": "DEBUG"
-}
-```
+The `GitRepo` class interacts with the Git repository to fetch tracked files, file contents, Git status, and recent commits.
 
-#### YAML
-```yaml
-commit_limit: 20
-most_changed_files_limit: 15
-least_changed_files_limit: 15
-log_level: DEBUG
-```
+### Dependency Parsers
 
-#### TOML
-```toml
-commit_limit = 20
-most_changed_files_limit = 15
-least_changed_files_limit = 15
-log_level = "DEBUG"
-```
+Parsers extract dependency information from various file types:
+- `PythonParser` for `requirements.txt` and `pyproject.toml`
+- `JavaScriptParser` for `package.json`
+- `DotNetParser` for `.csproj`
+- `PipfileParser` for `Pipfile`
 
-## Usage
+### RepoExplorer
 
-Here's a basic example of how to use Git Analyzer with configuration:
+The `RepoExplorer` class orchestrates the exploration of the Git repository, gathering information about the project structure, Git status, recent commits, and file change statistics.
+
+## Examples and Use Cases
+
+### Analyzing a Git Repository
+
+Run the following code to analyze a Python or DotNet project repository:
 
 ```python
 import asyncio
-from zap.git_analyzer import GitAnalyzer, GitAnalyzerConfig
+from zap.git_analyzer.analyzer import analyze_repo
 
-# Example configuration dictionary
-config = {
-    "commit_limit": 20,
-    "most_changed_files_limit": 15,
-    "least_changed_files_limit": 15,
-    "log_level": "DEBUG"
-}
+async def analyze_repo_example():
+    result = await analyze_repo("/path/to/your/repo")
+    print(result)
 
-# Create a GitAnalyzerConfig instance from the dictionary
-analyzer_config = GitAnalyzerConfig.from_dict(config)
-
-# Alternatively, load configuration from a file
-# analyzer_config = GitAnalyzerConfig.from_file('config.yaml')
-
-async def main():
-    # Initialize the GitAnalyzer with the configuration
-    analyzer = GitAnalyzer('/path/to/your/repo', config=analyzer_config)
-    
-    # Perform the analysis
-    result = await analyzer.analyze()
-    
-    # Print some results
-    print(f"Number of dependencies: {len(result.project_info.dependencies)}")
-    print(f"Number of recent commits: {len(result.recent_commits)}")
-    print(f"Most changed file: {result.most_changed_files[0][0]}")
-    
-    # Print Git status
-    print("Git status:")
-    for status, files in result.git_status.items():
-        print(f"  {status}: {', '.join(files)}")
-    
-    # Print most changed files
-    print("Most changed files:")
-    for file, count in result.most_changed_files:
-        print(f"  {file}: {count} changes")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+asyncio.run(analyze_repo_example())
 ```
 
-This example demonstrates how to create a custom configuration, initialize the GitAnalyzer with it, perform the analysis, and print some of the results.
+### Custom Configuration
+
+Create a custom configuration for the analyzer:
+
+1. **Configuration File (YAML)**:
+    ```yaml
+    commit_limit: 20
+    most_changed_files_limit: 15
+    least_changed_files_limit: 5
+    log_level: DEBUG
+    ```
+
+2. **Load and Use Configuration**:
+    ```python
+    import asyncio
+    from zap.git_analyzer.config import GitAnalyzerConfig
+    from zap.git_analyzer.analyzer import analyze_repo
+
+    async def analyze_with_custom_config():
+        config = GitAnalyzerConfig.from_file("/path/to/config.yaml")
+        result = await analyze_repo("/path/to/repo", config)
+        print(result)
+
+    asyncio.run(analyze_with_custom_config())
+    ```
+
+## Component Guide
+
+### GitRepo
+
+**Description**: Fetch information from the Git repository.
+
+**Usage**:
+```python
+from zap.git_analyzer.repo.git_repo import GitRepo
+
+repo = GitRepo("/path/to/repo")
+
+async def repo_operations():
+    tracked_files = await repo.get_tracked_files()
+    content = await repo.get_file_content("README.md")
+    print(tracked_files)
+    print(content)
+
+asyncio.run(repo_operations())
+```
+
+### PythonParser
+
+**Description**: Parses dependencies from `requirements.txt` and `pyproject.toml`.
+
+**Usage**:
+```python
+from zap.git_analyzer.parsers.python import PythonParser
+
+parser = PythonParser()
+
+async def parse_python_dependencies():
+    requirements_content = '''
+    flask==2.0.1
+    requests>=2.25.1
+    '''
+    pyproject_content = '''
+    [tool.poetry.dependencies]
+    flask = "^2.0.1"
+    requests = "^2.25.1"
+    '''
+    req_result = await parser._parse_requirements(requirements_content, "requirements.txt")
+    proj_result = await parser._parse_pyproject_toml(pyproject_content, "pyproject.toml")
+    print(req_result)
+    print(proj_result)
+
+asyncio.run(parse_python_dependencies())
+```
+
+### JavaScriptParser
+
+**Description**: Parses dependencies from `package.json`.
+
+**Usage**:
+```python
+from zap.git_analyzer.parsers.javascript import JavaScriptParser
+
+parser = JavaScriptParser()
+
+async def parse_javascript_dependencies():
+    content = '''
+    {
+      "dependencies": {
+        "react": "^17.0.2"
+      },
+      "devDependencies": {
+        "webpack": "^5.24.4"
+      }
+    }
+    '''
+    result = await parser.parse(content, "package.json")
+    print(result)
+
+asyncio.run(parse_javascript_dependencies())
+```
+
+### RepoExplorer
+
+**Description**: Orchestrates the exploration of a Git repository.
+
+**Usage**:
+```python
+from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.repo.repo_explorer import RepoExplorer
+from zap.git_analyzer.config import GitAnalyzerConfig
+
+async def explore_repository():
+    git_repo = GitRepo("/path/to/repo")
+    config = GitAnalyzerConfig()
+    explorer = RepoExplorer(git_repo, config)
+    result = await explorer.explore()
+    print(result)
+
+asyncio.run(explore_repository())
+```
+
+## Configuration
+
+### Example Configuration File (YAML)
+```yaml
+commit_limit: 20
+most_changed_files_limit: 15
+least_changed_files_limit: 5
+log_level: DEBUG
+```
+
+### Loading Configuration
+```python
+from zap.git_analyzer.config import GitAnalyzerConfig
+
+config = GitAnalyzerConfig.from_file("/path/to/config.yaml")
+print(config)
+```
+
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### Unsupported File Type
+
+**Error Message**:
+```
+ParserError: Unsupported file type: somefile.unknown
+```
+
+**Solution**: Only attempt to parse supported file types (`requirements.txt`, `pyproject.toml`, `package.json`, `.csproj`, `Pipfile`).
+
+#### Invalid JSON/TOML/XML
+
+**Error Message**:
+```
+ValueError: Invalid JSON in file: package.json
+```
+or
+```
+ValueError: Invalid TOML in file: pyproject.toml
+```
+
+**Solution**: Check the file for syntax errors or structural issues.

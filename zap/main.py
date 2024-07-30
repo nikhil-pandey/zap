@@ -16,8 +16,13 @@ def parse_arguments():
     load_dotenv()
     parser = argparse.ArgumentParser(description="Zap CLI")
     parser.add_argument(
-        "--tasks", type=str, nargs='*', default=None, help="Specify the tasks to be performed either inline or file path"
+        "--tasks",
+        type=str,
+        nargs="*",
+        default=None,
+        help="Specify the tasks to be performed either inline or file path",
     )
+    parser.add_argument("--parallel", action="store_true", help="Run tasks in parallel")
     parser.add_argument(
         "--openai-api-key", type=str, default=None, help="OpenAI API key"
     )
@@ -50,12 +55,7 @@ def parse_arguments():
         default=None,
         help="Path to the templates directory",
     )
-    parser.add_argument(
-        '--agent',
-        type=str,
-        default='chat',
-        help='Agent to start with'
-    )
+    parser.add_argument("--agent", type=str, default="chat", help="Agent to start with")
     parser.add_argument(
         "--repo-path", type=str, default=".", help="Path to the Git repository"
     )
@@ -96,6 +96,43 @@ def set_environment_variables(args):
     if args.openai_api_base and args.openai_api_key:
         os.environ["OPENAI_API_BASE"] = args.openai_api_base
         os.environ["OPENAI_API_KEY"] = args.openai_api_key
+    if os.getenv("OPENAI_API_BASE") is not None and os.getenv(
+        "OPENAI_API_BASE"
+    ).startswith("http://"):
+        import litellm
+        import httpx
+        import openai
+
+        litellm.client_session = httpx.Client(verify=False)
+        openai.http_client = httpx.Client(verify=False)
+        litellm.aclient_session = httpx.AsyncClient(verify=False)
+
+    callbacks = []
+    if os.getenv("LANGFUSE_PUBLIC_KEY") is not None:
+        callbacks.append("langfuse")
+    if os.getenv("LUNARY_PUBLIC_KEY") is not None:
+        callbacks.append("lunary")
+    if os.getenv("HELICONE_API_KEY") is not None:
+        callbacks.append("helicone")
+
+    import litellm
+
+    if len(callbacks) > 0:
+        litellm.success_callbacks = callbacks
+    litellm.drop_params = True
+
+    if args.verbose:
+        # print env variables partially for debugging
+        print("Environment Variables:")
+        print(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', '')[:6]}...")
+        print(f"ANTHROPIC_API_KEY: {os.getenv('ANTHROPIC_API_KEY', '')[:6]}...")
+        print(f"REPLICATE_API_KEY: {os.getenv('REPLICATE_API_KEY', '')[:6]}...")
+        print(f"TOGETHERAI_API_KEY: {os.getenv('TOGETHERAI_API_KEY', '')[:6]}...")
+        print(f"AZURE_API_BASE: {os.getenv('AZURE_API_BASE', '')}")
+        print(f"AZURE_API_VERSION: {os.getenv('AZURE_API_VERSION', '')}")
+        print(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')[:6]}")
+        print(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')[:6]}...")
+        print()
 
 
 async def initialize_config(args):
@@ -139,7 +176,9 @@ async def initialize_templates(args):
     print()
     print("Please make sure to update the templates_dir in the config file.")
     print("You can find the config file at ~/.zap/config.yaml")
-    print("If you haven't initialized the config file, you can do so using --init-config")
+    print(
+        "If you haven't initialized the config file, you can do so using --init-config"
+    )
     print()
     print("Happy Zapping!")
     return
@@ -158,7 +197,7 @@ async def main():
         await app.initialize(args)
 
         if args.tasks:
-            await app.perform_tasks(args.tasks)
+            await app.perform_tasks(args.tasks, args.parallel)
             return
 
         await app.run()

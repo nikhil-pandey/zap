@@ -12,21 +12,21 @@ from zap.git_analyzer.repo.repo_explorer import RepoExplorer
 def sample_repo(temp_git_repo):
     # Create a sample repository structure
     files = {
-        'requirements.txt': 'requests==2.25.1\nnumpy==1.20.1',
-        'src/main.py': 'print("Hello, World!")',
-        'tests/test_main.py': 'def test_main(): pass',
-        'package.json': '{"dependencies": {"express": "^4.17.1"}}',
+        "requirements.txt": "requests==2.25.1\nnumpy==1.20.1",
+        "src/main.py": 'print("Hello, World!")',
+        "tests/test_main.py": "def test_main(): pass",
+        "package.json": '{"dependencies": {"express": "^4.17.1"}}',
     }
 
     for file_path, content in files.items():
         dir_path = os.path.dirname(file_path)
         if dir_path:
             os.makedirs(os.path.join(temp_git_repo.path, dir_path), exist_ok=True)
-        with open(os.path.join(temp_git_repo.path, file_path), 'w') as f:
+        with open(os.path.join(temp_git_repo.path, file_path), "w") as f:
             f.write(content)
 
     os.chdir(temp_git_repo.path)
-    os.system('git add .')
+    os.system("git add .")
     os.system('git commit -m "Initial commit"')
 
     return temp_git_repo
@@ -58,12 +58,12 @@ async def test_repo_explorer_explore(sample_repo, config):
 
 @pytest.mark.asyncio
 async def test_repo_explorer_with_mocked_git_repo(mock_git_repo, config):
-    mock_git_repo.path = '/mock/path'
-    mock_git_repo.get_tracked_files.return_value = ['file1.py', 'file2.py']
-    mock_git_repo.get_file_content.return_value = 'Content'
-    mock_git_repo.get_status.return_value = {'new': [], 'modified': [], 'deleted': []}
+    mock_git_repo.path = "/mock/path"
+    mock_git_repo.get_tracked_files.return_value = ["file1.py", "file2.py"]
+    mock_git_repo.get_file_content.return_value = "Content"
+    mock_git_repo.get_status.return_value = {"new": [], "modified": [], "deleted": []}
     mock_git_repo.get_recent_commits.return_value = []
-    mock_git_repo.get_file_change_count.return_value = {'file1.py': 1, 'file2.py': 2}
+    mock_git_repo.get_file_change_count.return_value = {"file1.py": 1, "file2.py": 2}
 
     explorer = RepoExplorer(mock_git_repo, config)
     result = await explorer.explore()
