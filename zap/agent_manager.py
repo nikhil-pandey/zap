@@ -1,6 +1,7 @@
-import yaml
 from pathlib import Path
 from typing import Dict
+
+import yaml
 
 from zap.agents import *
 from zap.tools.tool_manager import ToolManager

@@ -1,4 +1,4 @@
-name: code_shell
+name: code_with_shell
 type: CodeAgent
 system_prompt: prompts/code/system.j2
 user_prompt: prompts/code/user.j2

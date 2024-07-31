@@ -2,13 +2,15 @@ import re
 
 from litellm import acompletion
 
+from zap.agents.chat_agent import ChatAgent
 from zap.agents.agent_output import AgentOutput
-from zap.agents.base import ChatAgent
 from zap.contexts.context import Context
 
 
 class PromptAgent(ChatAgent):
-    async def process(self, message: str, context: Context, template_context: dict) -> AgentOutput:
+    async def process(
+        self, message: str, context: Context, template_context: dict
+    ) -> AgentOutput:
         # TODO: This is probably going to be duplicate across agents, neet to refactor this
         messages = []
         for msg in context.messages:

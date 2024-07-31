@@ -1,11 +1,13 @@
 import pytest
 from zap.templating.engine import ZapTemplateEngine
 
+
 @pytest.mark.asyncio
 async def test_initialize_with_templates():
     templates = {"hello.txt": "Hello, {{ name }}!"}
     engine = ZapTemplateEngine(templates=templates)
     assert "hello.txt" in engine.templates
+
 
 @pytest.mark.asyncio
 async def test_render_simple_template():
@@ -13,6 +15,7 @@ async def test_render_simple_template():
     engine = ZapTemplateEngine(templates=templates)
     rendered = await engine.render_file("greeting.txt", {"name": "World"})
     assert rendered == "Hello, World!"
+
 
 @pytest.mark.asyncio
 async def test_render_complex_template():
@@ -22,6 +25,7 @@ async def test_render_complex_template():
     rendered = await engine.render_file("complex.txt", context)
     assert rendered == "Hello, Alice! Your role is Administrator."
 
+
 @pytest.mark.asyncio
 async def test_render_deeply_nested_context():
     templates = {"nested.txt": "Hello, {{ user.details.personal.name }}!"}
@@ -29,6 +33,7 @@ async def test_render_deeply_nested_context():
     context = {"user": {"details": {"personal": {"name": "Deep Nested Name"}}}}
     rendered = await engine.render_file("nested.txt", context)
     assert rendered == "Hello, Deep Nested Name!"
+
 
 @pytest.mark.asyncio
 async def test_render_dynamic_context_updates():

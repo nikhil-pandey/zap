@@ -1,5 +1,5 @@
+from zap.agents.chat_agent import ChatAgent
 from zap.agents.agent_output import AgentOutput
-from zap.agents.base import ChatAgent
 from zap.contexts.context import Context
 
 

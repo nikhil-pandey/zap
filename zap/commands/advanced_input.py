@@ -1,15 +1,20 @@
 import heapq
 import os
 from typing import Iterable
+
 from fuzzywuzzy import fuzz
-from prompt_toolkit.completion import Completion, Completer
-from prompt_toolkit.document import Document
 from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completion, Completer
 from prompt_toolkit.completion import ThreadedCompleter
+from prompt_toolkit.document import Document
 from prompt_toolkit.filters import Condition
-from prompt_toolkit.history import InMemoryHistory
+from prompt_toolkit.history import InMemoryHistory, FileHistory
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.shortcuts import CompleteStyle
+
+from zap.app_state import AppState
+from zap.cliux import UIInterface
+from zap.commands.command_registry import CommandRegistry
 
 
 class AdvancedCompleter(Completer):
@@ -135,8 +140,11 @@ class AdvancedCompleter(Completer):
 
 
 class AdvancedInput:
-    def __init__(self, registry, state, ui):
-        self.history = InMemoryHistory()
+    def __init__(self, registry: CommandRegistry, state: AppState, ui: UIInterface):
+        if state.config.command_history_file:
+            self.history = FileHistory(state.config.command_history_file)
+        else:
+            self.history = InMemoryHistory()
         self.completer = ThreadedCompleter(AdvancedCompleter(registry, state, ui))
         self.kb = KeyBindings()
         self.registry = registry

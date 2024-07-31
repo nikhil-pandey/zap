@@ -88,13 +88,8 @@ class Commands:
             "switch_context", aliases=["s"], description="Switch to a different context"
         )(self.ccm.switch_context)
         self.registry.command(
-            "list_contexts", aliases=["c"], description="List all available contexts"
-        )(self.ccm.list_contexts)
-        self.registry.command(
-            "visualize_context",
-            aliases=["viz"],
-            description="Show current context and agent",
-        )(self.ccm.show_current_context)
+            "show_contexts", aliases=["c"], description="List all available contexts"
+        )(self.ccm.show_contexts)
         self.registry.command("save_context", description="Save the current context")(
             self.ccm.save_context
         )
@@ -119,14 +114,14 @@ class Commands:
             description="Switch to a different agent in the current context",
         )(self.ccm.switch_agent)
         self.registry.command(
-            "list_agents", aliases=["la"], description="List all available agents"
-        )(self.ccm.list_agents)
+            "show_agents", aliases=["la"], description="List all available agents"
+        )(self.ccm.show_agents)
         self.registry.command("archive_context", description="Archive all contexts")(
             self.ccm.archive_all_contexts
         )
         self.registry.command(
-            "list_archives", aliases=["laa"], description="List all archived contexts"
-        )(self.ccm.list_archived_contexts)
+            "show_archives", aliases=["laa"], description="List all archived contexts"
+        )(self.ccm.show_archives)
         self.registry.command("load_archived", description="Load an archived context")(
             self.ccm.load_archived_context
         )

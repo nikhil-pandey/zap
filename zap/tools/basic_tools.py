@@ -46,7 +46,12 @@ class ReadFileTool(Tool):
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File {filename} does not exist.")
         with open(full_path, "r") as file:
-            content = file.read()
+            lines = file.readlines()
+
+        # Prefix lines with line numbers
+        prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
+        content = "".join(prefixed_lines)
+
         return {"status": "success", "content": content, "size": len(content)}
 
 
@@ -58,15 +63,15 @@ class WriteFileTool(Tool):
         self.app_state = app_state
 
     async def execute(
-            self,
-            filename: Annotated[str, "Path to the file to write"],
-            content: Annotated[str, "Content to write to the file"],
+        self,
+        filename: Annotated[str, "Path to the file to write"],
+        content: Annotated[str, "Content to write to the file"],
     ):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
-        with open(full_path, "w", encoding='utf-8') as file:
+        with open(full_path, "w", encoding="utf-8") as file:
             file.write(content)
         return {
             "status": "success",
@@ -105,6 +110,11 @@ class ListFilesTool(Tool):
         full_path = os.path.join(self.app_state.git_repo.root, directory)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
+        if directory == "./" or directory == "." or directory == "":
+            raise ValueError(
+                "You cannot list all files in the repository. Be more specific."
+            )
+
         files = [
             file
             for file in tracked_files
@@ -173,23 +183,97 @@ class LintProjectTool(ShellCommandTool):
 
 class RawShellCommandTool(ShellCommandTool):
     ALLOWED_COMMANDS = [
-        "ls", "pwd", "echo", "cat", "git", "python", "pip", "poetry", "pytest", "flake8", "black"
-                                                                                          "sed", "awk", "find", "grep",
-        "sort", "uniq", "wc", "head", "tail", "touch", "cp"
-                                                       "dir", "cd", "type", "where", "set", "cls", "copy", "del",
-        "move", "ren", "mkdir", "rmdir", "xcopy",
+        "ls",
+        "pwd",
+        "echo",
+        "cat",
+        "git",
+        "python",
+        "pip",
+        "poetry",
+        "pytest",
+        "flake8",
+        "black",
+        "sed",
+        "awk",
+        "find",
+        "grep",
+        "sort",
+        "uniq",
+        "wc",
+        "head",
+        "tail",
+        "touch",
+        "cp",
+        "dir",
+        "cd",
+        "type",
+        "where",
+        "set",
+        "cls",
+        "copy",
+        "move",
+        "ren",
+        "mkdir",
+        "xcopy",
+        "md",
     ]
 
     def __init__(self, app_state: AppState):
         super().__init__("shell_command", "Run a raw shell command.", app_state)
 
     async def execute(self, command: Annotated[str, "Command to run"]):
-        if not any(command.startswith(allowed_command) for allowed_command in self.ALLOWED_COMMANDS):
-            raise ValueError(f"Command not allowed. Allowed commands: {self.ALLOWED_COMMANDS}")
+        if not any(
+            command.startswith(allowed_command)
+            for allowed_command in self.ALLOWED_COMMANDS
+        ):
+            raise ValueError(
+                f"Command not allowed. Allowed commands: {self.ALLOWED_COMMANDS}"
+            )
         return await self.run_command(command)
 
 
-# Tool registration
+class EditFileTool(Tool):
+    def __init__(self, app_state: AppState):
+        super().__init__(
+            "edit_file",
+            "Edit the content of a file within the repository boundary between start line and end line.",
+        )
+        self.app_state = app_state
+
+    async def execute(
+        self,
+        filename: Annotated[str, "Path to the file to edit"],
+        start_line: Annotated[int, "The starting line number (1-indexed)"],
+        end_line: Annotated[int, "The ending line number (1-indexed)"],
+        content: Annotated[str, "Content to replace in the specified lines"],
+    ):
+        full_path = os.path.join(self.app_state.git_repo.root, filename)
+        if not full_path.startswith(self.app_state.git_repo.root):
+            raise ValueError("Path is outside the repository boundary.")
+        if not os.path.exists(full_path):
+            raise FileNotFoundError(f"File {filename} does not exist.")
+
+        with open(full_path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+
+        # Adjust for zero-indexed list
+        start_line -= 1
+        end_line -= 1
+
+        # Replace lines
+        lines[start_line : end_line + 1] = [content + "\n"]
+
+        with open(full_path, "w", encoding="utf-8") as file:
+            file.writelines(lines)
+
+        return {
+            "status": "success" if abs(end_line - start_line) < 20 else "warning",
+            "message": f"File {filename} edited successfully.",
+            "edited_lines": f"{start_line + 1}-{end_line + 1}",
+        }
+
+
 def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterface):
     tool_manager.register_tool(ReadFileTool(app_state))
     tool_manager.register_tool(WriteFileTool(app_state))
@@ -200,3 +284,4 @@ def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterfa
     tool_manager.register_tool(RunTestsTool(app_state))
     tool_manager.register_tool(LintProjectTool(app_state))
     tool_manager.register_tool(RawShellCommandTool(app_state))
+    tool_manager.register_tool(EditFileTool(app_state))  # New Tool Registered

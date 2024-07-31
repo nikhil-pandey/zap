@@ -23,6 +23,7 @@ class AppConfig:
     auto_persist_contexts: bool = True
     auto_archive_contexts: bool = True
     auto_load_contexts: bool = True
+    command_history_file: Optional[str] = None
 
 
 def load_config(args) -> AppConfig:

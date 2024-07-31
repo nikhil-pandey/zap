@@ -9,8 +9,14 @@ from zap.contexts.context import Context
 from zap.utils import get_files_content
 
 
-async def build_agent_template_context(message: str, context: Context, agent: Agent, state: AppState, config: AppConfig,
-                                       contexts: dict[str, Context]) -> Dict[str, Any]:
+async def build_agent_template_context(
+    message: str,
+    context: Context,
+    agent: Agent,
+    state: AppState,
+    config: AppConfig,
+    contexts: dict[str, Context],
+) -> Dict[str, Any]:
     """
     Builds the agent template context as a dictionary.
     """
@@ -29,17 +35,16 @@ async def build_agent_template_context(message: str, context: Context, agent: Ag
     for context_name, ctx in contexts.items():
         if context_name in output:
             # TODO: disallow creation of context with the same name as reserved keys
-            raise ValueError(f"Context name {context_name} is already in the output dictionary")
+            raise ValueError(
+                f"Context name {context_name} is already in the output dictionary"
+            )
 
         if ctx.messages and len(ctx.messages) > 0:
             output[context_name] = {
-                'message': ctx.messages[-1].content,
-                'history': [msg.to_dict() for msg in ctx.messages]
+                "message": ctx.messages[-1].content,
+                "history": [msg.to_dict() for msg in ctx.messages],
             }
         else:
-            output[context_name] = {
-                'message': '',
-                'history': []
-            }
+            output[context_name] = {"message": "", "history": []}
 
     return output

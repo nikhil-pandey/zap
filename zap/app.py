@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import os
 import sys
 import time
@@ -12,7 +11,8 @@ from rich.panel import Panel
 from rich.text import Text
 
 from zap.agent_manager import AgentManager
-from zap.agents.base import ChatAgent, Agent
+from zap.agents import ChatAgent
+from zap.agents.base import *
 from zap.agents.chat_message import ChatMessage
 from zap.app_state import AppState
 from zap.cliux import UI
@@ -21,8 +21,8 @@ from zap.config import AppConfig, load_config
 from zap.constants import FILE_ICONS
 from zap.contexts.agent_template_context import build_agent_template_context
 from zap.contexts.context import Context
-from zap.contexts.context_manager import ContextManager
 from zap.contexts.context_command_manager import ContextCommandManager
+from zap.contexts.context_manager import ContextManager
 from zap.git_analyzer import GitAnalyzer
 from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import register_tools
@@ -200,11 +200,14 @@ class ZapApp:
 
     async def chat_async(self, user_input: str, context: Context, agent: Agent):
         template_context = await build_agent_template_context(
-            user_input, context, agent, self.state, self.config, self.context_manager.contexts
+            user_input,
+            context,
+            agent,
+            self.state,
+            self.config,
+            self.context_manager.contexts,
         )
-        rendered_input = await self.template_engine.render(
-            user_input, template_context
-        )
+        rendered_input = await self.template_engine.render(user_input, template_context)
         output = await agent.process(rendered_input, context, template_context)
 
         for msg in output.message_history:
