@@ -143,7 +143,7 @@ async def initialize_config(args):
         print("Config file already exists.")
         return
     with open(config_path, "w") as f:
-        config: AppConfig = load_config([], args)
+        config: AppConfig = load_config(args)
         yaml.safe_dump(dataclasses.asdict(config), f)
 
     print(f"Config file initialized at {config_path}")
