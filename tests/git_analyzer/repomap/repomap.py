@@ -68,7 +68,7 @@ class TestFileProcessor(unittest.TestCase):
         mtime = FileProcessor.get_mtime("non_existing_file.py")
         self.assertIsNone(mtime)
 
-    @patch("builtins.open", new_callable=mock_open, read_data="file content")
+    @patch("builtins.open", new_callable=mock_open, read_data=b"file content")
     def test_read_text_existing_file(self, mock_file):
         result = FileProcessor.read_text("file1.py")
         self.assertEqual(result, "file content")
@@ -109,7 +109,10 @@ class TestTagExtractor(unittest.TestCase):
     @patch("zap.git_analyzer.repomap.get_parser")
     def test_get_tags_raw(self, mock_get_parser, mock_get_language, mock_filename_to_lang):
         self.io.read_text.return_value = "def my_function():\n    pass"
-        mock_get_language.return_value.query.return_value.captures.return_value = []
+        language_mock = mock_get_language.return_value
+        query_mock = MagicMock()
+        query_mock.captures.return_value = []
+        language_mock.query.return_value = query_mock
         result = list(self.tag_extractor.get_tags_raw("file1.py", "file1.py"))
         self.assertTrue(any(tag.kind == "def" for tag in result))
 
@@ -122,7 +125,10 @@ class TestTagExtractor(unittest.TestCase):
             def inner_function():
                 pass
         """
-        mock_get_language.return_value.query.return_value.captures.return_value = []
+        language_mock = mock_get_language.return_value
+        query_mock = MagicMock()
+        query_mock.captures.return_value = []
+        language_mock.query.return_value = query_mock
         result = list(self.tag_extractor.get_tags_raw("file1.py", "file1.py"))
         self.assertTrue(any(tag.kind == "def" and tag.name == "outer_function" for tag in result))
         self.assertTrue(any(tag.kind == "def" and tag.name == "inner_function" for tag in result))
@@ -221,7 +227,7 @@ class TestRepoMap(unittest.TestCase):
 
     def test_generate_map_empty(self):
         result = self.repo_map.generate_map([], [], max_map_tokens=1024)
-        self.assertEqual(result, "")
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":

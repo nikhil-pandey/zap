@@ -264,35 +264,30 @@ class RepoMap:
 
     def generate_map(self, chat_fnames, other_fnames, mentioned_fnames=None, mentioned_idents=None,
                      max_map_tokens=None):
+        if not chat_fnames and not other_fnames:
+            return None
+
         cache = self.cache_manager.load_cache()
         ranked_tags = self.graph_builder.build_graph(chat_fnames, other_fnames, mentioned_fnames, mentioned_idents,
                                                      self.tag_extractor, cache)
-
         num_tags = len(ranked_tags)
         lower_bound = 0
         upper_bound = num_tags
         best_tree = None
         best_tree_tokens = 0
-
         chat_rel_fnames = [os.path.relpath(fname) for fname in chat_fnames]
-
         middle = min(max_map_tokens // 25, num_tags)
-
         while lower_bound <= upper_bound:
             tree = self._to_tree(ranked_tags[:middle], chat_rel_fnames)
             num_tokens = self.io.token_count(tree)
-
             if num_tokens < max_map_tokens and num_tokens > best_tree_tokens:
                 best_tree = tree
                 best_tree_tokens = num_tokens
-
             if num_tokens < max_map_tokens:
                 lower_bound = middle + 1
             else:
                 upper_bound = middle - 1
-
             middle = (lower_bound + upper_bound) // 2
-
         return best_tree
 
     def _to_tree(self, tags, chat_rel_fnames):
