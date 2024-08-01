@@ -36,6 +36,20 @@ class RepoExplorer:
         Returns:
             ExplorationResult: An object containing various exploration results.
         """
+        # This creates tries and caches the file content
+        await self.git_repo.refresh()
+        if not self.config.explore:
+            LOGGER.info("Exploration is disabled. Skipping exploration.")
+            return ExplorationResult(
+                project_info=ProjectInfo(dependencies={}),
+                relevant_files={},
+                git_status={},
+                recent_commits=[],
+                most_changed_files=[],
+                least_changed_files=[],
+                file_change_count={}
+            )
+
         LOGGER.info(f"Starting exploration of repository: {self.git_repo.path}")
         tasks = [
             self.analyze_project_structure(),
@@ -54,8 +68,8 @@ class RepoExplorer:
             file_change_count.items(), key=lambda x: x[1], reverse=True
         )[: self.config.most_changed_files_limit]
         least_changed_files = sorted(file_change_count.items(), key=lambda x: x[1])[
-            : self.config.least_changed_files_limit
-        ]
+                              : self.config.least_changed_files_limit
+                              ]
 
         project_info = ProjectInfo(dependencies=dependencies)
 
@@ -71,7 +85,7 @@ class RepoExplorer:
         )
 
     async def analyze_project_structure(
-        self,
+            self,
     ) -> Tuple[Dict[str, DependencyInfo], Dict[str, int]]:
         """
         Analyze the project structure and dependencies.
@@ -88,17 +102,29 @@ class RepoExplorer:
         dependency_files = [
             f for f in tracked_files if ParserFactory.is_dependency_file(f)
         ]
+        LOGGER.debug(f"Found {len(dependency_files)} dependency files")
 
         parse_tasks = []
         for file_path in dependency_files:
-            content = await self.git_repo.get_file_content(file_path)
-            parser = ParserFactory.get_parser(file_path)
-            parse_tasks.append(parser.parse(content, file_path))
+            try:
+                content = await self.git_repo.get_file_content(file_path)
+                parser = ParserFactory.get_parser(file_path)
+                parse_tasks.append(parser.parse(content, file_path))
+            except Exception as e:
+                LOGGER.error(f"Error parsing file {file_path}: {str(e)}")
 
-        dependency_infos = await asyncio.gather(*parse_tasks)
+        dependency_infos = []
+        for task in asyncio.as_completed(parse_tasks):
+            try:
+                dependency_info = await task
+                dependency_infos.append(dependency_info)
+            except Exception as e:
+                LOGGER.error(f"Error parsing file: {str(e)}")
+                dependency_infos.append(None)
+
         dependencies = {
             file_path: info
-            for file_path, info in zip(dependency_files, dependency_infos)
+            for file_path, info in zip(dependency_files, dependency_infos) if info
         }
 
         relevant_files = {}
@@ -106,7 +132,8 @@ class RepoExplorer:
             for file in dep_info.config_files:
                 relevant_files[file] = relevant_files.get(file, 0) + 1
 
-        LOGGER.info(f"Found {len(dependencies)} dependency files")
+        LOGGER.info(f"Project analysis created. Found {len(dependencies)} dependency files")
+        LOGGER.debug(f"Dependency files: {dependency_files}")
         return dependencies, relevant_files
 
     async def get_git_status(self) -> Dict[str, List[str]]:
@@ -117,7 +144,9 @@ class RepoExplorer:
             Dict[str, List[str]]: A dictionary containing lists of new, modified, and deleted files.
         """
         LOGGER.info("Fetching Git status")
-        return await self.git_repo.get_status()
+        status = await self.git_repo.get_status()
+        LOGGER.debug(f"Git status: {status}")
+        return status
 
     async def get_recent_commits(self) -> List[CommitInfo]:
         """
@@ -129,4 +158,6 @@ class RepoExplorer:
             List[CommitInfo]: A list of CommitInfo objects representing the most recent commits.
         """
         LOGGER.info(f"Fetching {self.config.commit_limit} most recent commits")
-        return await self.git_repo.get_recent_commits(self.config.commit_limit)
+        commits = await self.git_repo.get_recent_commits(self.config.commit_limit)
+        LOGGER.debug(f"Found {len(commits)} recent commits")
+        return commits

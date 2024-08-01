@@ -13,6 +13,7 @@ class GitAnalyzerConfig:
     most_changed_files_limit: Optional[int] = 10
     least_changed_files_limit: Optional[int] = 10
     log_level: Optional[str] = "INFO"
+    explore: Optional[bool] = True
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "GitAnalyzerConfig":
@@ -21,6 +22,7 @@ class GitAnalyzerConfig:
             most_changed_files_limit=config_dict.get("most_changed_files_limit", 10),
             least_changed_files_limit=config_dict.get("least_changed_files_limit", 10),
             log_level=config_dict.get("log_level", "INFO"),
+            explore=config_dict.get("explore", True),
         )
 
     @classmethod

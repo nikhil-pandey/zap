@@ -45,6 +45,9 @@ def parse_arguments():
         "--azure-api-version", type=str, default=None, help="Azure API version"
     )
     parser.add_argument(
+        "--azure-api-key", type=str, default=None, help="Azure API Key"
+    )
+    parser.add_argument(
         "--azure-api-type", type=str, default=None, help="Azure API type"
     )
 
@@ -89,23 +92,15 @@ def set_environment_variables(args):
         os.environ["REPLICATE_API_KEY"] = args.replicate_api_key
     if args.togetherai_api_key:
         os.environ["TOGETHERAI_API_KEY"] = args.togetherai_api_key
-    if args.azure_api_base and args.azure_api_version and args.azure_api_type:
+    if args.azure_api_base and args.azure_api_version and args.azure_api_type and args.azure_api_key:
         os.environ["AZURE_API_BASE"] = args.azure_api_base
+        os.environ["AZURE_API_KEY"] = args.azure_api_key
         os.environ["AZURE_API_VERSION"] = args.azure_api_version
         os.environ["AZURE_API_TYPE"] = args.azure_api_type
+        os.environ["OPENAI_API_BASE"] = args.azure_api_base
     if args.openai_api_base and args.openai_api_key:
         os.environ["OPENAI_API_BASE"] = args.openai_api_base
         os.environ["OPENAI_API_KEY"] = args.openai_api_key
-    if os.getenv("OPENAI_API_BASE") is not None and os.getenv(
-        "OPENAI_API_BASE"
-    ).startswith("http://"):
-        import litellm
-        import httpx
-        import openai
-
-        litellm.client_session = httpx.Client(verify=False)
-        openai.http_client = httpx.Client(verify=False)
-        litellm.aclient_session = httpx.AsyncClient(verify=False)
 
     callbacks = []
     if os.getenv("LANGFUSE_PUBLIC_KEY") is not None:
@@ -123,6 +118,7 @@ def set_environment_variables(args):
 
     if args.verbose:
         # print env variables partially for debugging
+        litellm.set_verbose = True
         print("Environment Variables:")
         print(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', '')[:6]}...")
         print(f"ANTHROPIC_API_KEY: {os.getenv('ANTHROPIC_API_KEY', '')[:6]}...")
@@ -130,8 +126,8 @@ def set_environment_variables(args):
         print(f"TOGETHERAI_API_KEY: {os.getenv('TOGETHERAI_API_KEY', '')[:6]}...")
         print(f"AZURE_API_BASE: {os.getenv('AZURE_API_BASE', '')}")
         print(f"AZURE_API_VERSION: {os.getenv('AZURE_API_VERSION', '')}")
-        print(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')[:6]}")
-        print(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')[:6]}...")
+        print(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')}")
+        print(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')}...")
         print()
 
 
