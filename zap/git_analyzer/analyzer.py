@@ -7,36 +7,28 @@ from .logger import LOGGER, set_log_level
 from .models.exploration_result import ExplorationResult
 from .repo.git_repo import GitRepo
 from .repo.repo_explorer import RepoExplorer
-
+from .repomap import RepoMap
 
 class GitAnalyzer:
     """
     Main class for analyzing Git repositories.
-
-    This class provides high-level functionality to analyze a Git repository,
-    including its structure, dependencies, and commit history.
     """
-
-    def __init__(
-        self, path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None
-    ):
-        """
-        Initialize a GitAnalyzer instance.
-
-        Args:
-            path (str, optional): Path to the Git repository. If None, the current directory is used.
-            config (GitAnalyzerConfig, optional): Custom configuration. If None, default configuration is used.
-        """
+    def __init__(self, path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None):
         self.config = config or GitAnalyzerConfig()
         set_log_level(self.config.log_level)
         self.git_repo = GitRepo(path)
         self.repo_explorer = RepoExplorer(self.git_repo, self.config)
+        self.repo_map = RepoMap(root=path)
 
     async def analyze(self) -> ExplorationResult:
         LOGGER.info(f"Starting analysis of repository: {self.git_repo.path}")
         try:
             exploration_result = await self.repo_explorer.explore()
+            repo_map_result = self.repo_map.get_repo_map(
+                chat_files=[], other_files=list(await self.git_repo.get_tracked_files())
+            )
             LOGGER.info(f"Analysis completed for repository: {self.git_repo.path}")
+            # You can include repo_map_result in the ExplorationResult if needed
             return exploration_result
         except ParserError as e:
             LOGGER.error(f"Parser error during analysis: {str(e)}")
@@ -45,24 +37,10 @@ class GitAnalyzer:
             LOGGER.error(f"Error during analysis: {str(e)}")
             raise GitAnalyzerError(f"Error during analysis: {str(e)}") from e
 
-
-async def analyze_repo(
-    path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None
-) -> ExplorationResult:
-    """
-    Convenience function to analyze a Git repository.
-
-    Args:
-        path (str, optional): Path to the Git repository. If None, the current directory is used.
-        config (GitAnalyzerConfig, optional): Custom configuration. If None, default configuration is used.
-
-    Returns:
-        ExplorationResult: An object containing various analysis results.
-    """
+async def analyze_repo(path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None) -> ExplorationResult:
     LOGGER.info(f"Analyzing repository at path: {path or 'current directory'}")
     analyzer = GitAnalyzer(path, config)
     return await analyzer.analyze()
-
 
 if __name__ == "__main__":
     import sys

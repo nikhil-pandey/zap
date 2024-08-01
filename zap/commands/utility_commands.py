@@ -41,7 +41,7 @@ class UtilityCommands:
         }
         root = self.state.git_repo.root
 
-        content = await get_files_content(root, self.state.get_files())
+        content = await get_files_content(root, self.state.get_files(), False)
         try:
             pyperclip.copy(content)
             encoded = (

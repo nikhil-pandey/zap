@@ -30,6 +30,11 @@ coverage = "^7.6.0"
 psutil = "^6.0.0"
 boto3 = "^1.34.150"
 tenacity = "^9.0.0"
+diskcache = "^5.6.3"
+grep-ast = {git = "https://github.com/paul-gauthier/grep-ast.git"}
+networkx = "^3.3"
+numpy = "^2.0.1"
+scipy = "^1.14.0"
 
 [tool.poetry.dev-dependencies]
 
