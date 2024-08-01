@@ -39,14 +39,11 @@ class GitRepo:
         return set(self.file_trie.keys())
 
     async def get_file_content(self, path: str) -> str:
-        await self.refresh()
         full_path = os.path.join(self.root, path)
         async with aiofiles.open(full_path, "r") as file:
             return await file.read()
 
     async def get_status(self) -> Dict[str, List[str]]:
-        await self.refresh()
-
         def _get_status():
             status = self.repo.status()
             return {
@@ -70,8 +67,6 @@ class GitRepo:
         return await asyncio.to_thread(_get_status)
 
     async def get_recent_commits(self, limit: int = 10) -> List[CommitInfo]:
-        await self.refresh()
-
         def _get_recent_commits():
             commits = []
             if self.repo.is_empty:
@@ -92,8 +87,6 @@ class GitRepo:
         return await asyncio.to_thread(_get_recent_commits)
 
     async def get_file_change_count(self) -> Dict[str, int]:
-        await self.refresh()
-
         def _get_file_change_count():
             file_change_count = {}
             if self.repo.is_empty:
