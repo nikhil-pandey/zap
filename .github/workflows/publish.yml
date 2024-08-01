@@ -1,0 +1,35 @@
+name: Publish Python Package
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger the workflow for tags starting with 'v'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'  # Specify the Python version you want to use
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+
+    - name: Build the package
+      run: |
+        python setup.py sdist bdist_wheel
+        
+    - name: Publish to GitHub Packages
+      env:
+        TWINE_USERNAME: ${{ github.actor }}
+        TWINE_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        python -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
