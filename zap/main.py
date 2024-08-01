@@ -92,15 +92,16 @@ def set_environment_variables(args):
         os.environ["REPLICATE_API_KEY"] = args.replicate_api_key
     if args.togetherai_api_key:
         os.environ["TOGETHERAI_API_KEY"] = args.togetherai_api_key
-    if args.azure_api_base and args.azure_api_version and args.azure_api_type and args.azure_api_key:
+    if args.azure_api_base:
         os.environ["AZURE_API_BASE"] = args.azure_api_base
-        os.environ["AZURE_API_KEY"] = args.azure_api_key
+    if args.azure_api_version:
         os.environ["AZURE_API_VERSION"] = args.azure_api_version
+    if args.azure_api_type:
         os.environ["AZURE_API_TYPE"] = args.azure_api_type
-        os.environ["OPENAI_API_BASE"] = args.azure_api_base
-    if args.openai_api_base and args.openai_api_key:
+    if args.azure_api_key:
+        os.environ["AZURE_API_KEY"] = args.azure_api_key
+    if args.openai_api_base:
         os.environ["OPENAI_API_BASE"] = args.openai_api_base
-        os.environ["OPENAI_API_KEY"] = args.openai_api_key
 
     callbacks = []
     if os.getenv("LANGFUSE_PUBLIC_KEY") is not None:
