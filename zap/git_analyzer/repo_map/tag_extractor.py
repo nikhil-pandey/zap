@@ -8,7 +8,7 @@ import tree_sitter_c_sharp as tscsharp
 from pygments.lexers import guess_lexer_for_filename
 from pygments.token import Token
 from pygments.util import ClassNotFound
-from models import Tag
+from zap.git_analyzer.repo_map.models import Tag
 import logging
 
 

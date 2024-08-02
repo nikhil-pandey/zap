@@ -1,0 +1,219 @@
+<!-- filename: zap/git_analyzer/repo_map/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        svg {
+            display: block;
+            margin: auto;
+            background-color: white;
+            border: 1px solid #ccc;
+        }
+
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            fill: #333; /* Ensure the text color is dark */
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: auto;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: lightyellow;
+            border: 1px solid #ccc;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #focus-file-select {
+            display: block;
+            margin: 10px auto;
+            padding: 5px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+<h1>Graph Visualization</h1>
+<select id="focus-file-select">
+    <option value="">Select Focus File</option>
+</select>
+<svg width="960" height="600"></svg>
+<script>
+    const width = 960;
+    const height = 600;
+
+    const svg = d3.select("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .call(d3.zoom().on("zoom", (event) => {
+            svg.attr("transform", event.transform);
+        }))
+        .append("g");
+
+    const color = d3.scaleOrdinal(d3.schemeCategory10);
+
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
+
+    const focusFileSelect = document.getElementById('focus-file-select');
+
+    function loadFocusFiles() {
+        d3.json("/focus_files").then(function (files) {
+            files.forEach(function (file) {
+                const option = document.createElement("option");
+                option.value = file;
+                option.text = file;
+                focusFileSelect.appendChild(option);
+            });
+        });
+    }
+
+    function loadGraph(focusFile) {
+        const url = focusFile ? `/graph?focus_file=${focusFile}` : '/graph';
+        d3.json(url).then(function (graph) {
+            svg.selectAll("*").remove();
+
+            const nodeById = {};
+            graph.nodes.forEach(node => nodeById[node.id] = node);
+
+            const links = graph.links.map(link => {
+                return {
+                    source: nodeById[link.source],
+                    target: nodeById[link.target]
+                };
+            });
+
+            const simulation = d3.forceSimulation(graph.nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.source.id === focusFile || d.target.id === focusFile ? 50 : 100))
+                .force("charge", d3.forceManyBody().strength(d => d.id === focusFile ? -500 : -300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(links)
+                .enter().append("line")
+                .attr("class", "link")
+                .attr("stroke", d => d.source.id === focusFile || d.target.id === focusFile ? "#f00" : "#999")
+                .attr("stroke-width", d => d.source.id === focusFile || d.target.id === focusFile ? 2 : 1);
+
+            const node = svg.append("g")
+                .attr("class", "nodes")
+                .selectAll("g")
+                .data(graph.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("circle")
+                .attr("r", d => d.id === focusFile ? 15 : 10)  // Increase node size for focus file
+                .attr("fill", d => d.id === focusFile ? "#ff0" : color(d.group))
+                .on("mouseover", (event, d) => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html(d.id)
+                        .style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", (event, d) => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            node.append("title")
+                .text(d => d.id);
+
+            // Add background rectangle for text
+            node.append("rect")
+                .attr("x", 12)
+                .attr("y", -8)
+                .attr("width", d => d.id.split('/').pop().length * 6.5)
+                .attr("height", 16)
+                .attr("fill", "black")
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.5);
+
+            // Add text on top of rectangle
+            node.append("text")
+                .attr("dx", 15)
+                .attr("dy", ".35em")
+                .text(d => d.id.split('/').pop())
+                .style("fill", "#333");  // Ensure text color is dark
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+        }).catch(function (error) {
+            console.error("Error loading graph data:", error);
+        });
+    }
+
+    focusFileSelect.addEventListener('change', function () {
+        const focusFile = focusFileSelect.value;
+        loadGraph(focusFile);
+    });
+
+    loadFocusFiles();
+    loadGraph();
+</script>
+</body>
+</html>

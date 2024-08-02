@@ -1,5 +1,5 @@
 from typing import List, Dict
-from models import GraphNode, Tag, FileInfo
+from zap.git_analyzer.repo_map.models import GraphNode, Tag, FileInfo
 import networkx as nx
 
 
@@ -19,7 +19,7 @@ class RepoMap:
                         G.add_edge(file, def_file, ident=ref)
         return G
 
-    def get_ranked_tags_map(self, focus_files: List[str], max_files: int, max_tags_per_file: int = 50) -> List[Tag]:
+    def get_ranked_tags_map(self, focus_files: list[str], max_files: int, max_tags_per_file: int = 50) -> list[Tag]:
         personalization = {file: 1 for file in focus_files}
         ranked = nx.pagerank(self.nx_graph, personalization=personalization)
 

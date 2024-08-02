@@ -1,33 +1,52 @@
 # In cache_manager.py
-import json
+import sqlite3
 from pathlib import Path
-from typing import Dict, Any
-import os
+from typing import Dict, Any, Optional
+import json
+
 
 class CacheManager:
     def __init__(self, cache_dir: str):
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self.cache_file = self.cache_dir / "file_cache.json"
-        self.cache: Dict[str, Any] = self._load_cache()
+        self.db_path = self.cache_dir / "file_cache.db"
+        self.conn = sqlite3.connect(str(self.db_path))
+        self._create_table()
 
-    def _load_cache(self) -> Dict[str, Any]:
-        if self.cache_file.exists():
-            with self.cache_file.open('r') as f:
-                return json.load(f)
-        return {}
+    def _create_table(self):
+        with self.conn:
+            self.conn.execute('''
+                CREATE TABLE IF NOT EXISTS file_cache (
+                    file_path TEXT PRIMARY KEY,
+                    mtime REAL,
+                    tags TEXT
+                )
+            ''')
 
-    def _save_cache(self):
-        with self.cache_file.open('w') as f:
-            json.dump(self.cache, f)
+    def get_cache(self, file_path: str) -> Optional[Dict[str, Any]]:
+        with self.conn:
+            cursor = self.conn.execute(
+                "SELECT mtime, tags FROM file_cache WHERE file_path = ?",
+                (file_path,)
+            )
+            result = cursor.fetchone()
+        if result:
+            return {
+                'mtime': result[0],
+                'tags': json.loads(result[1])
+            }
+        return None
 
-    def get_cache(self, file_path: str) -> Dict[str, Any] | None:
-        return self.cache.get(file_path)
-
-    def set_cache(self, file_path: str, data: Dict[str, Any]):
-        self.cache[file_path] = data
-        self._save_cache()
+    def set_cache(self, file_path: str, mtime: float, tags: list[dict[str, Any]]):
+        with self.conn:
+            self.conn.execute(
+                "INSERT OR REPLACE INTO file_cache (file_path, mtime, tags) VALUES (?, ?, ?)",
+                (file_path, mtime, json.dumps(tags))
+            )
 
     def clear_cache(self):
-        self.cache.clear()
-        self._save_cache()
+        with self.conn:
+            self.conn.execute("DELETE FROM file_cache")
+
+    def close(self):
+        self.conn.close()
