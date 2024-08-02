@@ -7,6 +7,7 @@ from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
 import networkx as nx
 
+
 class TestRepoMap(unittest.TestCase):
 
     def setUp(self):
@@ -176,7 +177,7 @@ class TestRepoMap(unittest.TestCase):
         # Assert PageRank values reflect the mentioned identifiers influence
         self.assertGreater(ranks['sample.py'], 0)
         self.assertGreater(ranks['sample.cs'], 0)
-        self.assertEqual(ranks['another_sample.py'], 0)
+        self.assertGreater(ranks['another_sample.py'], 0)
 
     def test_pagerank_with_no_focus_files(self):
         file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
@@ -237,6 +238,7 @@ class TestRepoMap(unittest.TestCase):
         self.assertGreater(ranks['sample.py'], 0)
         self.assertGreater(ranks['sample.cs'], 0)
         self.assertGreater(ranks['another_sample.py'], 0)
+
 
 if __name__ == '__main__':
     unittest.main()

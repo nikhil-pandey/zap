@@ -36,11 +36,10 @@ class RepoMap:
         for ident in idents:
             definers = {file for file, node in self.graph.items() if ident in node.definitions}
             referencers = {file for file, node in self.graph.items() if ident in node.references}
-
             for definer in definers:
                 for referencer in referencers:
                     if definer != referencer:  # Avoid self-loops
-                        weight = math.sqrt(1)  # Assuming 1 reference for simplicity
+                        weight = 1.0  # Base weight
                         if ident in mentioned_idents:
                             weight *= 10
                         elif ident.startswith("_"):
@@ -50,6 +49,11 @@ class RepoMap:
                         print(f"Creating edge {referencer} -> {definer} with weight {weight} for ident {ident}")
 
                         G.add_edge(referencer, definer, weight=weight, ident=ident)
+
+        # Ensure all files are included in the graph
+        for file in self.graph:
+            if file not in G.nodes:
+                G.add_node(file)
 
         # Debug: Print the nodes and edges of the graph
         print("Graph Nodes:")
