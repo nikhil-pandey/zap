@@ -5429,6 +5429,26 @@ docs = ["sphinx (>=7.3,<8.0)", "sphinx-book-theme"]
 tests = ["tree-sitter-html", "tree-sitter-javascript", "tree-sitter-json", "tree-sitter-python", "tree-sitter-rust"]
 
 [[package]]
+name = "tree-sitter-c-sharp"
+version = "0.21.3"
+description = "C# grammar for tree-sitter"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tree-sitter-c-sharp-0.21.3.tar.gz", hash = "sha256:5afcc6bedd5b95065955f86858ecf623ac2d5f94e51c7b4fd5e80ceb2f3e375a"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-macosx_10_9_x86_64.whl", hash = "sha256:740ac4ab8eeb9d3912b99c21e205932a08674f0fbe55063ba4adbc7283a50e90"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:9c07e4bceb6b80d1074275f57b390426b69ee48664909c112bc359bf27466cdd"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ceb9c8d911a10f3d48534f798880d7756e6b82a5e1d20fdafaaa2acb91cb413a"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:99cc01b65022cbbc1165a55df8cfa898aec2562fe3304fca1ccbee0daa4554bf"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:40a6f775b71ff4f8d9d74c6d8ce66542e312ceff42ab7195a5c8dbdcc6196837"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:b11024c4ac2123a46972e51d22e7960f80dc65f53d3b6bad897f20db8f1d37e0"},
+    {file = "tree_sitter_c_sharp-0.21.3-cp38-abi3-win_amd64.whl", hash = "sha256:a7cde252d28ddde0ec6e0afdb0acb655cfe9884fc9fbcde3a16160a68b8ad08d"},
+]
+
+[package.extras]
+core = ["tree-sitter (>=0.21,<1.0)"]
+
+[[package]]
 name = "tree-sitter-languages"
 version = "1.10.2"
 description = "Binary Python wheels for all tree sitter languages."
@@ -5498,6 +5518,44 @@ files = [
 
 [package.dependencies]
 tree-sitter = "*"
+
+[[package]]
+name = "tree-sitter-python"
+version = "0.21.0"
+description = "Python grammar for tree-sitter"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-macosx_10_9_x86_64.whl", hash = "sha256:29e3addfabdaa88fa2aaaa2426d8ff12f0a0346c46b10dd5a76424355e5fa3cc"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:4b40e71ebd41046ca4fcde78b734e86f0b3f77055f51f1cac6e2662c37ec0520"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cda4e742627724eabed95e06ca67b640f8b31e86e776905afc396c928082f032"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-musllinux_1_1_i686.whl", hash = "sha256:df142d166aa6b575fdb0726a64d56cb1d8cb7a3ad5377eb5fa90557ffe4caffe"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:23a0cf850788c990436704837e6125cbf6535fe5a5729b9a84846fc254e915c7"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-win32.whl", hash = "sha256:86dce33757fa8d420d1c9089280d352507a7b9601b26732c73b77e9d0ddd8604"},
+    {file = "tree_sitter_python-0.21.0-cp38-abi3-win_amd64.whl", hash = "sha256:86b5c81b00f07b9cdc87e4fade0497c0af7b95365908608e31070668564b02e7"},
+]
+
+[package.extras]
+core = ["tree-sitter (>=0.21,<1.0)"]
+
+[[package]]
+name = "tree-sitter-rust"
+version = "0.21.2"
+description = "Rust grammar for tree-sitter"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-macosx_10_9_x86_64.whl", hash = "sha256:483591f17117fe802aa679fc058937be025b76a89bf17a82ccb462ce032c143e"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-macosx_11_0_arm64.whl", hash = "sha256:635b3781a9c44211b49950feabd081f3096dbd55b1f50fe7451a7f46d6d28f81"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:50f2ec41d8c1beda3c2d2765083d02c16f29bfab9d6269ac1387fa40f017f3b0"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:28c3ee2d21850e5b14289e1d4569b8770983af20f2575d2e2a3e1eeed3fc3c4c"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-musllinux_1_1_aarch64.whl", hash = "sha256:ed32387af91b37c6e592a34d4eb9fc935231a3ba8ba1ef52547c48fa0d20e249"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-musllinux_1_1_x86_64.whl", hash = "sha256:efd0f28f3da2a3341c0a2dd15410319b6d553b0b3900471a14c781d0833bd8eb"},
+    {file = "tree_sitter_rust-0.21.2-cp38-abi3-win_amd64.whl", hash = "sha256:2637441981531ab72b580fb567b0c65a61e59de337f2d5a02347269266ab9913"},
+]
+
+[package.extras]
+core = ["tree-sitter (>=0.21,<1.0)"]
 
 [[package]]
 name = "typing-extensions"
@@ -5659,4 +5717,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.13"
-content-hash = "028ed55c229d7ab221e49e4d03a19a506f518d8dd35247a9e9db5f840864670b"
+content-hash = "0b39039afbaedda6cb2517db9aab5558a8bc9aa09dbb038cd43e68318c91a024"

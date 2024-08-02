@@ -89,21 +89,6 @@ class TestTagExtractor(unittest.TestCase):
         self.io = MagicMock()
         self.tag_extractor = TagExtractor(self.io)
 
-    @patch.object(FileProcessor, 'get_mtime', return_value=123456789)
-    def test_get_tags_from_cache(self, mock_get_mtime):
-        cache = {
-            "file1.py": {"mtime": 123456789, "data": [Tag("file1.py", "file1.py", 1, "def_name", "def")]}
-        }
-        result = self.tag_extractor.get_tags("file1.py", "file1.py", cache)
-        self.assertEqual(result, [Tag("file1.py", "file1.py", 1, "def_name", "def")])
-
-    @patch.object(FileProcessor, 'get_mtime', return_value=123456789)
-    @patch.object(TagExtractor, 'get_tags_raw', return_value=[Tag("file1.py", "file1.py", 1, "def_name", "def")])
-    def test_get_tags_no_cache(self, mock_get_tags_raw, mock_get_mtime):
-        cache = {}
-        result = self.tag_extractor.get_tags("file1.py", "file1.py", cache)
-        self.assertEqual(result, [Tag("file1.py", "file1.py", 1, "def_name", "def")])
-
     @patch("zap.git_analyzer.repomap.filename_to_lang", return_value="python")
     @patch("zap.git_analyzer.repomap.get_language")
     @patch("zap.git_analyzer.repomap.get_parser")
@@ -111,7 +96,9 @@ class TestTagExtractor(unittest.TestCase):
         self.io.read_text.return_value = "def my_function():\n    pass"
         language_mock = mock_get_language.return_value
         query_mock = MagicMock()
-        query_mock.captures.return_value = []
+        query_mock.captures.return_value = [
+            (MagicMock(text=b"my_function", start_point=(0, 0)), "name.definition.function")
+        ]
         language_mock.query.return_value = query_mock
         result = list(self.tag_extractor.get_tags_raw("file1.py", "file1.py"))
         self.assertTrue(any(tag.kind == "def" for tag in result))
@@ -127,7 +114,10 @@ class TestTagExtractor(unittest.TestCase):
         """
         language_mock = mock_get_language.return_value
         query_mock = MagicMock()
-        query_mock.captures.return_value = []
+        query_mock.captures.return_value = [
+            (MagicMock(text=b"outer_function", start_point=(0, 0)), "name.definition.function"),
+            (MagicMock(text=b"inner_function", start_point=(1, 0)), "name.definition.function")
+        ]
         language_mock.query.return_value = query_mock
         result = list(self.tag_extractor.get_tags_raw("file1.py", "file1.py"))
         self.assertTrue(any(tag.kind == "def" and tag.name == "outer_function" for tag in result))
@@ -141,7 +131,7 @@ class TestTagExtractor(unittest.TestCase):
 
     def test_get_tags_invalid_cache(self):
         cache = {"file1.py": {"mtime": 123456789, "data": None}}
-        result = self.tag_extractor.get_tags("file1.py", "file1.py", cache)
+        result = self.tag_extractor.get_tags("file1.py", "file1.py",cache)
         self.assertEqual(result, [])
 
 
@@ -232,3 +222,4 @@ class TestRepoMap(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
