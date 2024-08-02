@@ -1,11 +1,12 @@
 from typing import List, Dict
-from models import GraphNode, Tag
+from models import GraphNode, Tag, FileInfo
 import networkx as nx
 
 
 class RepoMap:
-    def __init__(self, graph: Dict[str, GraphNode]):
+    def __init__(self, graph: Dict[str, GraphNode], file_infos: Dict[str, FileInfo]):
         self.graph = graph
+        self.file_infos = file_infos
         self.nx_graph = self._create_nx_graph()
 
     def _create_nx_graph(self) -> nx.DiGraph:
@@ -26,6 +27,7 @@ class RepoMap:
 
         ranked_tags = []
         for file, _ in sorted_files:
-            ranked_tags.extend(self.graph[file].tags)
+            if file in self.file_infos:
+                ranked_tags.extend(self.file_infos[file].tags)
 
         return ranked_tags
