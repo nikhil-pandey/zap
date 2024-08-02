@@ -19,7 +19,7 @@ class RepoMap:
                         G.add_edge(file, def_file, ident=ref)
         return G
 
-    def get_ranked_tags_map(self, focus_files: List[str], max_files: int) -> List[Tag]:
+    def get_ranked_tags_map(self, focus_files: List[str], max_files: int, max_tags_per_file: int = 50) -> List[Tag]:
         personalization = {file: 1 for file in focus_files}
         ranked = nx.pagerank(self.nx_graph, personalization=personalization)
 
@@ -28,6 +28,6 @@ class RepoMap:
         ranked_tags = []
         for file, _ in sorted_files:
             if file in self.file_infos:
-                ranked_tags.extend(self.file_infos[file].tags)
+                ranked_tags.extend(self.file_infos[file].tags[:max_tags_per_file])
 
-        return ranked_tags
+        return ranked_tags[:max_files * max_tags_per_file]

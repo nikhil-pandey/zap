@@ -7,7 +7,6 @@ from .logger import LOGGER, set_log_level
 from .models.exploration_result import ExplorationResult
 from .repo.git_repo import GitRepo
 from .repo.repo_explorer import RepoExplorer
-from .repomap import RepoMap
 
 
 class GitAnalyzer:
