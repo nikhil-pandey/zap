@@ -1,3 +1,4 @@
+# filename: tests/git_analyzer/repo_map/test_repo_map.py
 import unittest
 import tempfile
 import os
@@ -5,7 +6,6 @@ from zap.git_analyzer.repo_map.repo_analyzer import RepoAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
 import networkx as nx
-
 
 class TestRepoMap(unittest.TestCase):
 
@@ -54,7 +54,6 @@ class TestRepoMap(unittest.TestCase):
         with open(self.csharp_file_path, 'w') as f:
             f.write(self.csharp_file_content)
 
-        # Adding another file to create a more interconnected example
         self.another_python_file_content = """
         from sample import SampleClass
 
@@ -72,12 +71,7 @@ class TestRepoMap(unittest.TestCase):
 
     def test_pagerank_calculation(self):
         file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
-        print("File Infos:", file_infos)  # Debug statement
         graph = self.repo_analyzer.build_graph(file_infos)
-        print("Graph Nodes and Edges:")  # Debug statement
-        for node, adj in graph.items():
-            print(f"{node}: {adj}")
-
         repo_map = RepoMap(graph, file_infos)
         repo_map.calculate_pagerank(['sample.py', 'sample.cs', 'another_sample.py'], set())
 
@@ -100,7 +94,149 @@ class TestRepoMap(unittest.TestCase):
         ranked_tags = repo_map.get_ranked_tags_map(['sample.py'], set(), max_files=2, max_tags_per_file=2)
         self.assertGreater(len(ranked_tags), 0)
 
+    def test_isolated_file(self):
+        isolated_file_content = """
+        class IsolatedClass:
+            def isolated_method(self):
+                pass
+        """
+        isolated_file_path = os.path.join(self.repo_path, 'isolated.py')
+        with open(isolated_file_path, 'w') as f:
+            f.write(isolated_file_content)
+
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py', 'isolated.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['sample.py', 'sample.cs', 'another_sample.py', 'isolated.py'], set())
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with isolated file:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank value for isolated file is zero
+        self.assertEqual(ranks['isolated.py'], 0)
+
+    def test_circular_references(self):
+        circular_file_content_1 = """
+        from circular2 import CircularClass2
+
+        class CircularClass1:
+            def method1(self):
+                instance = CircularClass2()
+                instance.method2()
+        """
+        circular_file_content_2 = """
+        from circular1 import CircularClass1
+
+        class CircularClass2:
+            def method2(self):
+                instance = CircularClass1()
+                instance.method1()
+        """
+        circular_file_path_1 = os.path.join(self.repo_path, 'circular1.py')
+        with open(circular_file_path_1, 'w') as f:
+            f.write(circular_file_content_1)
+
+        circular_file_path_2 = os.path.join(self.repo_path, 'circular2.py')
+        with open(circular_file_path_2, 'w') as f:
+            f.write(circular_file_content_2)
+
+        file_infos = self.repo_analyzer.analyze_files(['circular1.py', 'circular2.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['circular1.py', 'circular2.py'], set())
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with circular references:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank values are greater than zero
+        self.assertGreater(ranks['circular1.py'], 0)
+        self.assertGreater(ranks['circular2.py'], 0)
+
+    def test_pagerank_with_different_weights(self):
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['sample.py', 'sample.cs'], {'method_one', 'SampleClass'})
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with different weights:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank values reflect the mentioned identifiers influence
+        self.assertGreater(ranks['sample.py'], 0)
+        self.assertGreater(ranks['sample.cs'], 0)
+        self.assertEqual(ranks['another_sample.py'], 0)
+
+    def test_pagerank_with_no_focus_files(self):
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        with self.assertRaises(ValueError):
+            repo_map.calculate_pagerank([], set())
+
+    def test_frequently_mentioned_identifiers(self):
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['sample.py', 'sample.cs'], {'SampleClass', 'method_one'})
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with frequently mentioned identifiers:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank values reflect the influence of frequently mentioned identifiers
+        self.assertGreater(ranks['sample.py'], 0)
+        self.assertGreater(ranks['sample.cs'], 0)
+        self.assertGreater(ranks['another_sample.py'], 0)
+
+    def test_sparsely_mentioned_identifiers(self):
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['sample.py', 'sample.cs'], {'sample_function'})
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with sparsely mentioned identifiers:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank values reflect the influence of sparsely mentioned identifiers
+        self.assertGreater(ranks['sample.py'], 0)
+        self.assertGreater(ranks['sample.cs'], 0)
+
+    def test_identifiers_mentioned_across_multiple_files(self):
+        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
+        graph = self.repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+        repo_map.calculate_pagerank(['sample.py', 'sample.cs'], {'SampleClass', 'CompositeClass'})
+
+        ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')
+
+        # Debug: Print the PageRank values
+        print("PageRank values with identifiers mentioned across multiple files:")
+        for node, rank in ranks.items():
+            print(f"{node}: {rank}")
+
+        # Assert PageRank values reflect the influence of identifiers mentioned across multiple files
+        self.assertGreater(ranks['sample.py'], 0)
+        self.assertGreater(ranks['sample.cs'], 0)
+        self.assertGreater(ranks['another_sample.py'], 0)
 
 if __name__ == '__main__':
     unittest.main()
-
