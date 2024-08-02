@@ -1,4 +1,3 @@
-<!-- filename: zap/git_analyzer/repo_map/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,21 +7,22 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #2b2b2b;
             margin: 0;
             padding: 0;
+            color: #ccc;
         }
 
         h1 {
             text-align: center;
-            color: #333;
+            color: #fff;
         }
 
         svg {
             display: block;
             margin: auto;
-            background-color: white;
-            border: 1px solid #ccc;
+            background-color: #1b1b1b;
+            border: 1px solid #444;
         }
 
         .node {
@@ -31,7 +31,7 @@
         }
 
         .link {
-            stroke: #999;
+            stroke: #bbb;
             stroke-opacity: 0.6;
         }
 
@@ -39,7 +39,7 @@
             font-family: Arial, sans-serif;
             font-size: 12px;
             pointer-events: none;
-            fill: #333; /* Ensure the text color is dark */
+            fill: #fff;
         }
 
         .tooltip {
@@ -48,8 +48,9 @@
             width: auto;
             padding: 5px;
             font: 12px sans-serif;
-            background: lightyellow;
-            border: 1px solid #ccc;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #444;
+            color: #fff;
             pointer-events: none;
             opacity: 0;
         }
@@ -59,14 +60,58 @@
             margin: 10px auto;
             padding: 5px;
             font-size: 16px;
+            width: 400px;
+            color: #000;
+        }
+
+        #legend, #top-pageranks {
+            text-align: center;
+            margin: 10px;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        #search-box {
+            display: block;
+            margin: 10px auto;
+            padding: 5px;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        #download-btn {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
 <h1>Graph Visualization</h1>
-<select id="focus-file-select">
-    <option value="">Select Focus File</option>
+<input type="text" id="search-box" placeholder="Search File">
+<select id="focus-file-select" multiple size="10">
+    <option value="">Select Focus Files</option>
 </select>
+<div id="legend">
+    <div><span class="legend-color" style="background-color: #d73027;"></span>High PageRank</div>
+    <div><span class="legend-color" style="background-color: #fee08b;"></span>Medium PageRank</div>
+    <div><span class="legend-color" style="background-color: #1a9850;"></span>Low PageRank</div>
+</div>
+<div id="top-pageranks">
+    <h2>Top PageRank Files</h2>
+    <ul id="pagerank-list"></ul>
+</div>
+<button id="download-btn">Download Graph</button>
 <svg width="960" height="600"></svg>
 <script>
     const width = 960;
@@ -80,42 +125,48 @@
         }))
         .append("g");
 
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
+    const color = d3.scaleSequential(d3.interpolateRdYlGn).domain([1, 0]);
 
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip");
 
     const focusFileSelect = document.getElementById('focus-file-select');
+    const searchBox = document.getElementById('search-box');
+    const pagerankList = document.getElementById('pagerank-list');
+    const downloadBtn = document.getElementById('download-btn');
+
+    function trimPath(path) {
+        const parts = path.split('/');
+        return parts.slice(-3).join('/');
+    }
 
     function loadFocusFiles() {
         d3.json("/focus_files").then(function (files) {
             files.forEach(function (file) {
                 const option = document.createElement("option");
                 option.value = file;
-                option.text = file;
+                option.text = trimPath(file);
                 focusFileSelect.appendChild(option);
             });
         });
     }
 
-    function loadGraph(focusFile) {
-        const url = focusFile ? `/graph?focus_file=${focusFile}` : '/graph';
+    function loadGraph(focusFiles) {
+        const url = focusFiles.length ? `/graph?focus_file=${focusFiles.join(',')}` : '/graph';
         d3.json(url).then(function (graph) {
             svg.selectAll("*").remove();
 
             const nodeById = {};
             graph.nodes.forEach(node => nodeById[node.id] = node);
 
-            const links = graph.links.map(link => {
-                return {
-                    source: nodeById[link.source],
-                    target: nodeById[link.target]
-                };
-            });
+            const links = graph.links.map(link => ({
+                source: nodeById[link.source],
+                target: nodeById[link.target]
+            }));
 
             const simulation = d3.forceSimulation(graph.nodes)
-                .force("link", d3.forceLink(links).id(d => d.id).distance(d => d.source.id === focusFile || d.target.id === focusFile ? 50 : 100))
-                .force("charge", d3.forceManyBody().strength(d => d.id === focusFile ? -500 : -300))
+                .force("link", d3.forceLink(links).id(d => d.id).distance(d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? 50 : 100))
+                .force("charge", d3.forceManyBody().strength(d => focusFiles.includes(d.id) ? -500 : -300))
                 .force("center", d3.forceCenter(width / 2, height / 2));
 
             const link = svg.append("g")
@@ -124,8 +175,8 @@
                 .data(links)
                 .enter().append("line")
                 .attr("class", "link")
-                .attr("stroke", d => d.source.id === focusFile || d.target.id === focusFile ? "#f00" : "#999")
-                .attr("stroke-width", d => d.source.id === focusFile || d.target.id === focusFile ? 2 : 1);
+                .attr("stroke", d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? "#f00" : "#bbb")
+                .attr("stroke-width", d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? 2 : 1);
 
             const node = svg.append("g")
                 .attr("class", "nodes")
@@ -139,13 +190,13 @@
                     .on("end", dragended));
 
             node.append("circle")
-                .attr("r", d => d.id === focusFile ? 15 : 10)  // Increase node size for focus file
-                .attr("fill", d => d.id === focusFile ? "#ff0" : color(d.group))
+                .attr("r", d => Math.max(10, Math.min(20, d.pagerank * 50)))
+                .attr("fill", d => focusFiles.includes(d.id) ? "#ff0" : color(d.pagerank))
                 .on("mouseover", (event, d) => {
                     tooltip.transition()
                         .duration(200)
                         .style("opacity", .9);
-                    tooltip.html(d.id)
+                    tooltip.html(`ID: ${d.id}<br>PageRank: ${d.pagerank.toFixed(4)}`)
                         .style("left", (event.pageX + 5) + "px")
                         .style("top", (event.pageY - 28) + "px");
                 })
@@ -158,22 +209,20 @@
             node.append("title")
                 .text(d => d.id);
 
-            // Add background rectangle for text
             node.append("rect")
                 .attr("x", 12)
                 .attr("y", -8)
-                .attr("width", d => d.id.split('/').pop().length * 6.5)
+                .attr("width", d => trimPath(d.id).length * 6.5)
                 .attr("height", 16)
                 .attr("fill", "black")
                 .attr("stroke", "black")
                 .attr("stroke-width", 0.5);
 
-            // Add text on top of rectangle
             node.append("text")
                 .attr("dx", 15)
                 .attr("dy", ".35em")
-                .text(d => d.id.split('/').pop())
-                .style("fill", "#333");  // Ensure text color is dark
+                .text(d => trimPath(d.id))
+                .style("fill", "#fff");
 
             simulation.on("tick", () => {
                 link
@@ -202,18 +251,52 @@
                 d.fx = null;
                 d.fy = null;
             }
+
+            // Update the top PageRank section
+            updateTopPageRanks(graph.nodes);
         }).catch(function (error) {
             console.error("Error loading graph data:", error);
         });
     }
 
+    function updateTopPageRanks(nodes) {
+        const sortedNodes = nodes.sort((a, b) => b.pagerank - a.pagerank).slice(0, 10);
+        pagerankList.innerHTML = "";
+        sortedNodes.forEach(node => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `${trimPath(node.id)}: ${node.pagerank.toFixed(4)}`;
+            pagerankList.appendChild(listItem);
+        });
+    }
+
+    function downloadGraph() {
+        const svgElement = document.querySelector("svg");
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgElement);
+        const a = document.createElement("a");
+        a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source);
+        a.download = "graph.svg";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
     focusFileSelect.addEventListener('change', function () {
-        const focusFile = focusFileSelect.value;
-        loadGraph(focusFile);
+        const focusFiles = Array.from(focusFileSelect.selectedOptions).map(option => option.value);
+        loadGraph(focusFiles);
     });
 
+    searchBox.addEventListener('input', function () {
+        const searchTerm = searchBox.value.toLowerCase();
+        Array.from(focusFileSelect.options).forEach(option => {
+            option.hidden = !option.value.toLowerCase().includes(searchTerm);
+        });
+    });
+
+    downloadBtn.addEventListener('click', downloadGraph);
+
     loadFocusFiles();
-    loadGraph();
+    loadGraph([]);
 </script>
 </body>
 </html>

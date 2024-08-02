@@ -17,9 +17,9 @@ def get_repo_analyzer():
 @app.route('/graph')
 def get_graph():
     focus_file = request.args.get('focus_file', '')
+    focus_files = focus_file.split(',') if focus_file else []
     repo_analyzer = get_repo_analyzer()
     repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
-    focus_files = [focus_file] if focus_file else []
     other_files = [str(p) for p in Path(repo_path).rglob("*.py") if p not in focus_files]
 
     all_files = focus_files + other_files
@@ -30,6 +30,11 @@ def get_graph():
     graph = repo_analyzer.build_graph(file_infos)
 
     repo_map = RepoMap(graph, file_infos)
+
+    # Calculate PageRank
+    ranked = nx.pagerank(repo_map.nx_graph, personalization={file: 100 / len(focus_files) for file in focus_files})
+    for node in repo_map.nx_graph.nodes:
+        repo_map.nx_graph.nodes[node]['pagerank'] = ranked[node]
 
     # Convert the graph to JSON
     data = nx.node_link_data(repo_map.nx_graph)
