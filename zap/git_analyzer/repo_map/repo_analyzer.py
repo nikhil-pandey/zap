@@ -1,7 +1,5 @@
-# In repo_analyzer.py
 import os
 from pathlib import Path
-from typing import List, Dict
 from zap.git_analyzer.repo_map.models import FileInfo, GraphNode, Tag
 from zap.git_analyzer.repo_map.tag_extractor import TagExtractor
 from zap.git_analyzer.repo_map.cache_manager import CacheManager
@@ -10,7 +8,7 @@ from zap.git_analyzer.repo_map.cache_manager import CacheManager
 class RepoAnalyzer:
     def __init__(self, repo_path: str, config):
         self.repo_path = Path(repo_path)
-        self.tag_extractor = TagExtractor()
+        self.tag_extractor = TagExtractor(repo_path)
         self.cache_manager = CacheManager(os.path.join(repo_path, config.cache_dir))
         self.config = config
 

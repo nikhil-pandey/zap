@@ -17,7 +17,7 @@ def main(repo_path: str, focus_files: list[str], other_files: list[str], config:
     ranked_tags = repo_map.get_ranked_tags_map(focus_files, config.max_files, config.max_tags_per_file)
 
     for tag in ranked_tags:
-        print(f"{tag.rel_fname}:{tag.line} - {tag.name} ({tag.kind})")
+        print(f"{tag.path}:{tag.line} - {tag.name} ({tag.kind})")
 
 
 if __name__ == "__main__":

@@ -4,8 +4,7 @@ from typing import List, Set
 
 @dataclass
 class Tag:
-    rel_fname: str
-    fname: str
+    path: str
     line: int
     name: str
     kind: str
