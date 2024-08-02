@@ -55,6 +55,17 @@ class RepoAnalyzer:
                 elif tag.kind == "ref":
                     references.add(tag.name)
             graph[file_path] = GraphNode(file_path, references, definitions)
+
+        # Adding relations between files based on references and definitions
+        for file_path, file_info in file_infos.items():
+            for tag in file_info.tags:
+                if tag.kind == "ref":
+                    for def_file_path, def_file_info in file_infos.items():
+                        if tag.name in [d.name for d in def_file_info.tags if d.kind == "def"]:
+                            # Ensure bi-directional edge
+                            if file_path != def_file_path:
+                                graph[file_path].references.add(def_file_path)
+                                graph[def_file_path].references.add(file_path)  # Adding reverse reference
         return graph
 
     def __del__(self):

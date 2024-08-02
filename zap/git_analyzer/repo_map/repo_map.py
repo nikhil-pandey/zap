@@ -35,19 +35,21 @@ class RepoMap:
         G = nx.MultiDiGraph()
         for ident in idents:
             definers = {file for file, node in self.graph.items() if ident in node.definitions}
-            for referencer, num_refs in Counter(
-                ref for file, node in self.graph.items() for ref in node.references if ref == ident).items():
-                for definer in definers:
-                    weight = math.sqrt(num_refs)
-                    if ident in mentioned_idents:
-                        weight *= 10
-                    elif ident.startswith("_"):
-                        weight *= 0.1
+            referencers = {file for file, node in self.graph.items() if ident in node.references}
 
-                    # Debug statement to log the weight adjustment
-                    print(f"Creating edge {referencer} -> {definer} with weight {weight} for ident {ident}")
+            for definer in definers:
+                for referencer in referencers:
+                    if definer != referencer:  # Avoid self-loops
+                        weight = math.sqrt(1)  # Assuming 1 reference for simplicity
+                        if ident in mentioned_idents:
+                            weight *= 10
+                        elif ident.startswith("_"):
+                            weight *= 0.1
 
-                    G.add_edge(referencer, definer, weight=weight, ident=ident)
+                        # Debug statement to log the weight adjustment
+                        print(f"Creating edge {referencer} -> {definer} with weight {weight} for ident {ident}")
+
+                        G.add_edge(referencer, definer, weight=weight, ident=ident)
 
         # Debug: Print the nodes and edges of the graph
         print("Graph Nodes:")
