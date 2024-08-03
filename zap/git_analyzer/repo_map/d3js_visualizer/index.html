@@ -1,4 +1,3 @@
-<!-- filename: zap/git_analyzer/repo_map/d3js_visualizer/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,12 +94,29 @@
             border: none;
             cursor: pointer;
         }
+
+        #loading-spinner {
+            display: none;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
 <h1>Graph Visualization</h1>
 <input type="text" id="repo-path-input" placeholder="Enter repo URL or file path">
 <button id="analyze-btn">Analyze</button>
+<div id="loading-spinner"></div>
 <input type="text" id="search-box" placeholder="Search File">
 <select id="focus-file-select" multiple size="10">
     <option value="">Select Focus Files</option>
@@ -109,7 +125,7 @@
 <div id="legend">
     <div><span class="legend-color" style="background-color: #d73027;"></span>High PageRank</div>
     <div><span class="legend-color" style="background-color: #fee08b;"></span>Medium PageRank</div>
-    <div><span class="legend-color" style="background-color: #1a9850;"></span>Low PageRank</div>
+    <div><span class="legend-color" style="background-color: #313695;"></span>Low PageRank</div>
 </div>
 <div id="top-pageranks">
     <h2>Top PageRank Files</h2>
@@ -129,7 +145,7 @@
         }))
         .append("g");
 
-    const color = d3.scaleSequential(d3.interpolateRdYlGn).domain([1, 0]);
+    const color = d3.scaleSequential(d3.interpolateRdYlBu).domain([1, 0]);  // Invert the range
 
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip");
@@ -141,6 +157,7 @@
     const mentionedIdentsInput = document.getElementById('mentioned-idents-input');
     const pagerankList = document.getElementById('pagerank-list');
     const downloadBtn = document.getElementById('download-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
 
     function trimPath(path) {
         const parts = path.split('/');
@@ -167,7 +184,13 @@
             url.searchParams.append('mentioned_identifiers', mentionedIdents.join(','));
         }
 
+        loadingSpinner.style.display = 'block';
+        analyzeBtn.disabled = true;
+
         d3.json(url).then(function (graph) {
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
+
             svg.selectAll("*").remove();
 
             const nodeById = {};
@@ -177,6 +200,15 @@
                 source: nodeById[link.source],
                 target: nodeById[link.target]
             }));
+
+            // Normalize PageRank values to a range of [0, 1]
+            const pagerankValues = graph.nodes.map(node => node.pagerank);
+            const minPagerank = Math.min(...pagerankValues);
+            const maxPagerank = Math.max(...pagerankValues);
+            const normalizedRange = maxPagerank - minPagerank > 0 ? maxPagerank - minPagerank : 1;
+            graph.nodes.forEach(node => {
+                node.normalizedPagerank = (node.pagerank - minPagerank) / normalizedRange;
+            });
 
             const simulation = d3.forceSimulation(graph.nodes)
                 .force("link", d3.forceLink(links).id(d => d.id).distance(d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? 50 : 100))
@@ -204,8 +236,8 @@
                     .on("end", dragended));
 
             node.append("circle")
-                .attr("r", d => Math.max(10, Math.min(20, d.pagerank * 50)))
-                .attr("fill", d => focusFiles.includes(d.id) ? "#ff0" : color(d.pagerank))
+                .attr("r", d => Math.max(10, Math.min(20, d.normalizedPagerank * 50)))
+                .attr("fill", d => focusFiles.includes(d.id) ? "#ff0" : color(d.normalizedPagerank))
                 .on("mouseover", (event, d) => {
                     tooltip.transition()
                         .duration(200)
@@ -269,6 +301,8 @@
             // Update the top PageRank section
             updateTopPageRanks(graph.nodes);
         }).catch(function (error) {
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
             console.error("Error loading graph data:", error);
         });
     }
@@ -319,9 +353,13 @@
     analyzeBtn.addEventListener('click', function () {
         const repoPath = repoPathInput.value;
         if (repoPath) {
+            analyzeBtn.disabled = true;
+            loadingSpinner.style.display = 'block';
             fetch(`/analyze?repo_path=${encodeURIComponent(repoPath)}`)
                 .then(response => response.json())
                 .then(data => {
+                    analyzeBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
                     if (data.error) {
                         alert(data.error);
                     } else {
@@ -330,6 +368,8 @@
                     }
                 })
                 .catch(error => {
+                    analyzeBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
                     console.error("Error analyzing repository:", error);
                 });
         } else {
