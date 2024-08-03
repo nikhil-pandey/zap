@@ -5,8 +5,8 @@ from .config import GitAnalyzerConfig
 from .exceptions import GitAnalyzerError, ParserError
 from .logger import LOGGER, set_log_level
 from .models.exploration_result import ExplorationResult
-from .repo.git_repo import GitRepo
-from .repo.repo_explorer import RepoExplorer
+from zap.git_analyzer.git_repo import GitRepo
+from zap.git_analyzer.repo_explorer import RepoExplorer
 
 
 class GitAnalyzer:
@@ -33,17 +33,3 @@ class GitAnalyzer:
         except Exception as e:
             LOGGER.error(f"Error during analysis: {str(e)}")
             raise GitAnalyzerError(f"Error during analysis: {str(e)}") from e
-
-
-async def analyze_repo(path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None) -> ExplorationResult:
-    LOGGER.info(f"Analyzing repository at path: {path or 'current directory'}")
-    analyzer = GitAnalyzer(path, config)
-    return await analyzer.analyze()
-
-
-if __name__ == "__main__":
-    import sys
-
-    repo_path = sys.argv[1] if len(sys.argv) > 1 else None
-    result = asyncio.run(analyze_repo(repo_path))
-    print(result)

@@ -4,8 +4,8 @@ from unittest.mock import Mock
 import pytest
 
 from zap.git_analyzer.config import GitAnalyzerConfig
-from zap.git_analyzer.repo.git_repo import GitRepo
-from zap.git_analyzer.repo.repo_explorer import RepoExplorer
+from zap.git_analyzer.git_repo import GitRepo
+from zap.git_analyzer.repo_explorer import RepoExplorer
 
 
 @pytest.fixture

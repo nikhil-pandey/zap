@@ -6,9 +6,9 @@ import aiofiles
 import pygit2
 import pygtrie
 
-from ..exceptions import RepoError
-from ..models.dependency import CommitInfo
-from ..utils.constants import SEPARATOR
+from zap.git_analyzer.exceptions import RepoError
+from zap.git_analyzer.models.dependency import CommitInfo
+from zap.git_analyzer.utils.constants import SEPARATOR
 
 
 class GitRepo:

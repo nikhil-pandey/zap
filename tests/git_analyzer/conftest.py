@@ -7,7 +7,7 @@ from contextlib import contextmanager
 
 import pytest
 
-from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.git_repo import GitRepo
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

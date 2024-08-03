@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.git_repo import GitRepo
 
 
 @pytest.fixture
