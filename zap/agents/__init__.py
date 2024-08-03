@@ -5,4 +5,3 @@ from .echo_agent import EchoAgent
 from .agent_config import AgentConfig
 from .prompt_agent import PromptAgent
 from .chat_agent import *
-from .editor_agent import *

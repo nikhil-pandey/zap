@@ -1,10 +1,4 @@
-Here is some information about my system and the project:
-
-- **Operating System**: {{ os }}
-- **Shell**: {{ shell }}
-- **CPU Count**: {{ cpus }}
-- **Current Date and Time**: {{ datetime }}
-### Project Metadata:
+Project Metadata:
 - **Dependencies**:
 {% for file, info in repo_metadata['project_info']['dependencies'].items() %}
     - **File**: {{ file }}
@@ -15,12 +9,12 @@ Here is some information about my system and the project:
         - {{ dep }}
     {%- endfor %}
 {% endfor %}
-### Repository Map:
+Map:
 {{ repo_map }}
 
-### Content of Relevant Files:
+Most relevant files:
 {{ files }}
----
+
 <task>
     {{ message }}
 </task>

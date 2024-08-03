@@ -66,6 +66,7 @@ class ZapApp:
             root_path=self.state.git_repo.root,
         )
         self.code_analyzer = CodeAnalyzer(code_analyzer)
+        self.state.code_analyzer = self.code_analyzer
         file_infos = await self.code_analyzer.analyze_files(await self.git_analyzer.git_repo.get_tracked_files())
         graph = await self.code_analyzer.build_graph(file_infos)
         self.repo_map = RepoMap(graph, file_infos)

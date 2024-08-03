@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Annotated
+from typing import Annotated, Optional
 
 from zap.app_state import AppState
 from zap.cliux import UIInterface
@@ -317,6 +317,23 @@ class ReplaceBlockTool(Tool):
         }
 
 
+class SearchTagTool(Tool):
+    def __init__(self, app_state: AppState):
+        super().__init__("search_symbol", "Search for a symbol within the repository boundary.")
+        self.app_state = app_state
+
+    async def execute(self, symbol: Annotated[str, "Symbol to search for"],
+                      kind: Optional[Annotated[str, "Filter by kind (def or ref)"]] = None):
+        tag_data = await self.app_state.code_analyzer.query_symbol(symbol)
+        if kind:
+            tag_data = [tag for tag in tag_data if tag.kind == kind]
+        return {
+            "status": "success",
+            "tags": [tag.__dict__ for tag in tag_data],
+            "count": len(tag_data)
+        }
+
+
 def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterface):
     tool_manager.register_tool(ReadFileTool(app_state))
     tool_manager.register_tool(WriteFileTool(app_state))
@@ -329,3 +346,4 @@ def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterfa
     tool_manager.register_tool(RawShellCommandTool(app_state))
     tool_manager.register_tool(EditFileTool(app_state))
     tool_manager.register_tool(ReplaceBlockTool(app_state))
+    tool_manager.register_tool(SearchTagTool(app_state))

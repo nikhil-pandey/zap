@@ -1,4 +1,12 @@
 name: editor
-type: EditorAgent
+type: CodeAgent
 system_prompt: prompts/editor/system.j2
 user_prompt: prompts/editor/user.j2
+tools:
+  - read_file
+  - list_files
+  - delete_file
+  - lint_project
+  - run_tests
+  - shell_command
+  - search_symbol

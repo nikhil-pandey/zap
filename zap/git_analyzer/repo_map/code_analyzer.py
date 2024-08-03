@@ -11,6 +11,7 @@ from zap.git_analyzer.repo_map.tag_extractor import TagExtractor
 from zap.git_analyzer.repo_map.cache_manager import CacheManager
 from zap.git_analyzer.logger import LOGGER
 
+
 class CodeAnalyzer:
     def __init__(self, config: CodeAnalyzerConfig):
         self.config = config

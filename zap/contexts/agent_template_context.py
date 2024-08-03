@@ -27,14 +27,14 @@ async def build_agent_template_context(
     """
     list_of_files = state.get_files()
     list_of_files.update(input.file_paths)
-    files = await get_files_content(state.git_repo.root, list_of_files)
+    files = await get_files_content(state.git_repo.root, list_of_files, prefix_lines=False)
     ranked_tags = repo_map.get_ranked_tags_map(
         focus_files=list(list_of_files),
         mentioned_idents=input.symbols,
         max_files=100,
         max_tags_per_file=1000,
     )
-    repo_map = await get_files_content_from_tags(state.git_repo.root, ranked_tags, prepend_line_numbers=True,
+    repo_map = await get_files_content_from_tags(state.git_repo.root, ranked_tags, prepend_line_numbers=False,
                                                  exclude_files=list_of_files, limit=20000)
 
     output = {

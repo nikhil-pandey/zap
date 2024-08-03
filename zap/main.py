@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import dataclasses
 import os
+from .logger import LOGGER
 from pathlib import Path
 
 import aiofiles
