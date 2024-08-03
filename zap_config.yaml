@@ -11,7 +11,6 @@ git_analyzer_config:
   least_changed_files_limit: 10
   log_level: INFO
   most_changed_files_limit: 10
-templates_dir: C:\Users\nikhi\RiderProjects\zapfinal\zap\templates
 ui_config:
   history_file: command_history.log
   live_refresh_per_second: 4
@@ -22,4 +21,4 @@ ui_config:
   theme: default
   verbose: true
 verbose: true
-command_history_file: C:\Users\nikhi\.zap\command_history.log
+command_history_file: command_history.log

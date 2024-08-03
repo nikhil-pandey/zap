@@ -1,11 +1,10 @@
-from .analyzer import GitAnalyzer, analyze_repo
+from .analyzer import GitAnalyzer
 from .exceptions import GitAnalyzerError, ParserError, RepoError
 from .models.dependency import DependencyInfo, ProjectInfo, CommitInfo
 from .models.enums import Language, PackageManager, DependencyFileType
 
 __all__ = [
     "GitAnalyzer",
-    "analyze_repo",
     "DependencyInfo",
     "ProjectInfo",
     "Language",
