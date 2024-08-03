@@ -1,12 +1,14 @@
 import dataclasses
 import os
+import platform
+from datetime import datetime
 from typing import Dict, Any
 
 from zap.agents import Agent
 from zap.app_state import AppState
 from zap.config import AppConfig
 from zap.contexts.context import Context
-from zap.utils import get_files_content
+from zap.utils import get_files_content, get_shell
 
 
 async def build_agent_template_context(
@@ -24,11 +26,14 @@ async def build_agent_template_context(
     files = await get_files_content(state.git_repo.root, list_of_files)
 
     output = {
+        "os": platform.system(),
+        "shell": await get_shell(),
+        "cpus": os.cpu_count(),
+        "datetime": datetime.now().isoformat(),
         "message": message,
         "list_of_files": list(list_of_files),
         "files": files,
         "root": state.git_repo.root,
-        "os": os.name,
         "repo_metadata": dataclasses.asdict(state.repo_metadata),
     }
 

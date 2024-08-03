@@ -79,7 +79,11 @@ def parse_arguments():
         action="store_true",
         help="Force the operation for init-config and init-templates",
     )
-
+    parser.add_argument(
+        "--clear-context",
+        action="store_true",
+        help="Clear the context files",
+    )
     return parser.parse_args()
 
 
@@ -189,6 +193,15 @@ async def main():
         await initialize_config(args)
     elif args.init_templates:
         await initialize_templates(args)
+    elif args.clear_context:
+        context_dir = Path.home() / ".zap" / "contexts"
+        if context_dir.exists():
+            for file in context_dir.rglob("*"):
+                if file.is_file():
+                    file.unlink()
+            print("Context files cleared.")
+        else:
+            print("No context files found.")
     else:
         app = ZapApp()
         await app.initialize(args)

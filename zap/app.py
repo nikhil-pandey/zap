@@ -130,7 +130,7 @@ class ZapApp:
                 self.ui.print(f"Filepaths: {user_input.file_paths}")
                 self.ui.print(f"Symbols: {user_input.symbols}")
 
-                await self.handle_input(user_input.message, context, agent)
+                await self.handle_input(user_input, context, agent)
             except KeyboardInterrupt:
                 current_time = time.time()
                 diff = current_time - self.last_interrupt_time
@@ -214,30 +214,30 @@ class ZapApp:
             agent = self.agent_manager.get_agent(context.current_agent)
             await self.handle_input(task, context, agent)
 
-    async def handle_input(self, user_input, context, agent):
-        if user_input.startswith("/"):
-            await self.commands.run_command(user_input)
-        elif user_input in ["exit", "quit", "q", "/exit"]:
-            self.ui.print("Exiting...")
-            sys.exit()
+    async def handle_input(self, user_input: UserInput, context, agent):
+        if user_input.command is not None:
+            if user_input.command in {'exit', 'quit', 'q'}:
+                self.ui.print("Exiting...")
+                sys.exit()
+            await self.commands.run_command(user_input.command)
         else:
             await self.chat_async(user_input, context, agent)
 
-    async def chat_async(self, user_input: str, context: Context, agent: Agent):
+    async def chat_async(self, user_input: UserInput, context: Context, agent: Agent):
         template_context = await build_agent_template_context(
-            user_input,
+            user_input.message,
             context,
             agent,
             self.state,
             self.config,
             self.context_manager.contexts,
         )
-        rendered_input = await self.template_engine.render(user_input, template_context)
+        rendered_input = await self.template_engine.render(user_input.message, template_context)
         output = await agent.process(rendered_input, context, template_context)
 
         for msg in output.message_history:
             chat_message = ChatMessage.from_agent_output(msg, agent.config.name)
-            chat_message.metadata["raw_input"] = user_input
+            chat_message.metadata["raw_input"] = user_input.message
             if user_input != rendered_input:
                 chat_message.metadata["rendered_input"] = rendered_input
             context.add_message(chat_message)

@@ -17,9 +17,10 @@ from zap.commands.command_registry import CommandRegistry
 
 @dataclasses.dataclass
 class UserInput:
-    message: str
-    file_paths: Optional[List[str]]
-    symbols: Optional[Set[str]]
+    message: Optional[str] = None
+    command: Optional[str] = None
+    file_paths: Optional[List[str]] = None
+    symbols: Optional[Set[str]] = None
 
 
 class AdvancedInput:
@@ -99,10 +100,14 @@ class AdvancedInput:
             if not user_input:
                 continue
             user_input = user_input.strip()
+
+            if user_input.startswith("/") or user_input in {"q", "quit", "exit"}:
+                return UserInput(command=user_input)
+
             if not user_input.startswith("/") and len(user_input.split()) == 1:
                 maybe_command = "/" + user_input
                 if self.registry.is_command(maybe_command):
-                    return UserInput(maybe_command)
+                    return UserInput(command=maybe_command)
 
             file_paths, symbols = self.extract_file_paths_and_symbols(user_input)
-            return UserInput(user_input, file_paths, symbols)
+            return UserInput(message=user_input, file_paths=file_paths, symbols=symbols)

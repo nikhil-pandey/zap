@@ -262,7 +262,7 @@ class EditFileTool(Tool):
         end_line -= 1
 
         # Replace lines
-        lines[start_line : end_line + 1] = [content + "\n"]
+        lines[start_line: end_line + 1] = [content + "\n"]
 
         with open(full_path, "w", encoding="utf-8") as file:
             file.writelines(lines)
@@ -271,6 +271,50 @@ class EditFileTool(Tool):
             "status": "success" if abs(end_line - start_line) < 20 else "warning",
             "message": f"File {filename} edited successfully.",
             "edited_lines": f"{start_line + 1}-{end_line + 1}",
+        }
+
+
+class ReplaceBlockTool(Tool):
+    def __init__(self, app_state: AppState):
+        super().__init__("replace_block", "Replace a block of text in a file within the repository boundary.")
+        self.app_state = app_state
+
+    async def execute(
+        self,
+        filename: Annotated[str, "Path to the file to edit"],
+        search_block: Annotated[str, "Block of text to search for"],
+        replace_block: Annotated[str, "Block of text to replace with"],
+    ):
+        full_path = os.path.join(self.app_state.git_repo.root, filename)
+        if not full_path.startswith(self.app_state.git_repo.root):
+            raise ValueError("Path is outside the repository boundary.")
+        if not os.path.exists(full_path):
+            # create the file if it does not exist
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "w", encoding="utf-8") as file:
+                file.write(replace_block)
+            return {
+                "status": "success",
+                "message": f"File {filename} created successfully.",
+            }
+
+        with open(full_path, "r", encoding="utf-8") as file:
+            content = file.read()
+
+        if search_block not in content:
+            return {
+                "status": "failed",
+                "message": f"Search block not found in file {filename}. Make sure everything including whitespace is correct.",
+            }
+
+        updated_content = content.replace(search_block, replace_block)
+
+        with open(full_path, "w", encoding="utf-8") as file:
+            file.write(updated_content)
+
+        return {
+            "status": "success",
+            "message": f"Block replaced successfully in file {filename}.",
         }
 
 
@@ -284,4 +328,5 @@ def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterfa
     tool_manager.register_tool(RunTestsTool(app_state))
     tool_manager.register_tool(LintProjectTool(app_state))
     tool_manager.register_tool(RawShellCommandTool(app_state))
-    tool_manager.register_tool(EditFileTool(app_state))  # New Tool Registered
+    tool_manager.register_tool(EditFileTool(app_state))
+    tool_manager.register_tool(ReplaceBlockTool(app_state))
