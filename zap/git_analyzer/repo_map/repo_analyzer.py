@@ -41,7 +41,7 @@ class RepoAnalyzer:
 
                 self.cache_manager.set_cache(rel_path, mtime, [tag.to_dict() for tag in tags])
             except Exception as e:
-                LOGGER.error(f"Error processing file {abs_path}: {e}")
+                LOGGER.error(f"Error analyzing file {abs_path}: {str(e)}")
 
         return file_infos
 
