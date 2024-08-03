@@ -9,8 +9,9 @@ import logging
 
 
 class TagExtractor:
-    def __init__(self, root_path: str):
+    def __init__(self, root_path: str, encoding: str = 'utf-8'):
         self.root_path = root_path
+        self.encoding = encoding
 
     def _get_query_scm(self, lang):
         query_path = Path(__file__).parent / "queries" / f"tree-sitter-{lang}-tags.scm"
@@ -32,7 +33,7 @@ class TagExtractor:
                 logging.warning(f"No query scheme found for language: {lang}")
                 return []
 
-            tree = parser.parse(bytes(content, "utf-8"))
+            tree = parser.parse(bytes(content, self.encoding))
             query = language.query(query_scm)
             captures = query.captures(tree.root_node)
 
@@ -45,11 +46,10 @@ class TagExtractor:
                     kind = "ref"
                 if not kind:
                     continue
-                # Since we're looking at the name node, the parent node is the one that contains the actual definition
                 body = content[node.parent.start_byte:node.parent.end_byte]
                 tags.append(Tag(
                     path=os.path.relpath(fname, self.root_path),
-                    name=node.text.decode("utf-8"),
+                    name=node.text.decode(self.encoding),
                     kind=kind,
                     line=node.start_point[0] + 1,
                     body=body
@@ -59,11 +59,3 @@ class TagExtractor:
         except Exception as e:
             logging.error(f"Error extracting tags from {fname}: {str(e)}")
             raise
-
-    def query_by_symbol(self, file_infos: dict[str, list[Tag]], symbol: str) -> list[Tag]:
-        results = []
-        for tags in file_infos.values():
-            for tag in tags:
-                if tag.name == symbol:
-                    results.append(tag)
-        return results

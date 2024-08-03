@@ -11,8 +11,8 @@ app = Flask(__name__)
 
 def get_repo_analyzer():
     repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
-    config = Config()
-    return RepoAnalyzer(repo_path, config)
+    config = Config(repo_path)
+    return RepoAnalyzer(config)
 
 
 @app.route('/graph')
@@ -26,7 +26,7 @@ def get_graph():
         return jsonify({'error': 'No focus files provided'}), 400
 
     repo_analyzer = get_repo_analyzer()
-    repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
+    repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'
     other_files = [str(p) for p in Path(repo_path).rglob("*.py") if p not in focus_files]
 
     all_files = focus_files + other_files

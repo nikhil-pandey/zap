@@ -1,8 +1,6 @@
 from typing import List, Dict, Set
 from zap.git_analyzer.repo_map.models import GraphNode, Tag, FileInfo
 import networkx as nx
-import math
-from collections import defaultdict, Counter
 
 
 class RepoMap:
