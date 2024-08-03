@@ -1,9 +1,10 @@
-# In cache_manager.py
+# filename: zap/git_analyzer/repo_map/cache_manager.py
 import sqlite3
 from pathlib import Path
 from typing import Dict, Any, Optional
 import json
 
+CACHE_VERSION = 1
 
 class CacheManager:
     def __init__(self, cache_dir: str):
@@ -19,18 +20,19 @@ class CacheManager:
                 CREATE TABLE IF NOT EXISTS file_cache (
                     file_path TEXT PRIMARY KEY,
                     mtime REAL,
-                    tags TEXT
+                    tags TEXT,
+                    version INTEGER
                 )
             ''')
 
     def get_cache(self, file_path: str) -> Optional[Dict[str, Any]]:
         with self.conn:
             cursor = self.conn.execute(
-                "SELECT mtime, tags FROM file_cache WHERE file_path = ?",
+                "SELECT mtime, tags, version FROM file_cache WHERE file_path = ?",
                 (file_path,)
             )
             result = cursor.fetchone()
-        if result:
+        if result and result[2] == CACHE_VERSION:
             return {
                 'mtime': result[0],
                 'tags': json.loads(result[1])
@@ -40,8 +42,8 @@ class CacheManager:
     def set_cache(self, file_path: str, mtime: float, tags: list[dict[str, Any]]):
         with self.conn:
             self.conn.execute(
-                "INSERT OR REPLACE INTO file_cache (file_path, mtime, tags) VALUES (?, ?, ?)",
-                (file_path, mtime, json.dumps(tags))
+                "INSERT OR REPLACE INTO file_cache (file_path, mtime, tags, version) VALUES (?, ?, ?, ?)",
+                (file_path, mtime, json.dumps(tags), CACHE_VERSION)
             )
 
     def clear_cache(self):

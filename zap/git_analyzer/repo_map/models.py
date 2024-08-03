@@ -8,6 +8,7 @@ class Tag:
     line: int
     name: str
     kind: str
+    body: str = ""
 
     def to_dict(self):
         return asdict(self)

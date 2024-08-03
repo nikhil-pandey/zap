@@ -3,6 +3,7 @@ from pathlib import Path
 from zap.git_analyzer.repo_map.models import FileInfo, GraphNode, Tag
 from zap.git_analyzer.repo_map.tag_extractor import TagExtractor
 from zap.git_analyzer.repo_map.cache_manager import CacheManager
+from zap.git_analyzer.logger import LOGGER
 
 
 class RepoAnalyzer:
@@ -40,7 +41,7 @@ class RepoAnalyzer:
 
                 self.cache_manager.set_cache(rel_path, mtime, [tag.to_dict() for tag in tags])
             except Exception as e:
-                print(f"Error processing file {path}: {str(e)}")
+                LOGGER.error(f"Error processing file {abs_path}: {e}")
 
         return file_infos
 
@@ -67,6 +68,11 @@ class RepoAnalyzer:
                                 graph[file_path].references.add(def_file_path)
                                 graph[def_file_path].references.add(file_path)  # Adding reverse reference
         return graph
+
+    def query_symbol(self, symbol: str) -> list[Tag]:
+        file_infos = self.analyze_files(list(self.repo_path.rglob("*.py")))
+        tags_by_file = {file: info.tags for file, info in file_infos.items()}
+        return self.tag_extractor.query_by_symbol(tags_by_file, symbol)
 
     def __del__(self):
         if hasattr(self, 'cache_manager'):

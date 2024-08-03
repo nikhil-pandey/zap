@@ -26,7 +26,6 @@ class RepoMap:
             raise ValueError("Focus files list is empty.")
 
         personalization = {file: 1.0 / len(focus_files) for file in focus_files}
-        print(f"Personalization vector: {personalization}")
 
         idents = set(ref for node in self.graph.values() for ref in node.references).intersection(
             set(d for node in self.graph.values() for d in node.definitions)
@@ -45,9 +44,6 @@ class RepoMap:
                         elif ident.startswith("_"):
                             weight *= 0.1
 
-                        # Debug statement to log the weight adjustment
-                        print(f"Creating edge {referencer} -> {definer} with weight {weight} for ident {ident}")
-
                         G.add_edge(referencer, definer, weight=weight, ident=ident)
 
         # Ensure all files are included in the graph
@@ -61,15 +57,6 @@ class RepoMap:
                 if node != other_node:
                     G.add_edge(node, other_node, weight=delta)
 
-        # Debug: Print the nodes and edges of the graph
-        print("Graph Nodes:")
-        for node in G.nodes:
-            print(node)
-
-        print("Graph Edges:")
-        for edge in G.edges(data=True):
-            print(edge)
-
         try:
             # Adding damping factor and max iterations to ensure convergence
             ranked = nx.pagerank(G, personalization=personalization, alpha=0.85, max_iter=1000)
@@ -78,11 +65,6 @@ class RepoMap:
 
         for node in self.nx_graph.nodes:
             self.nx_graph.nodes[node]['pagerank'] = ranked.get(node, 0)
-
-        # Debug: Print out the PageRank values
-        print("PageRank values:")
-        for node, rank in ranked.items():
-            print(f"{node}: {rank}")
 
     def get_ranked_tags_map(self, focus_files: List[str], mentioned_idents: Set[str], max_files: int,
                             max_tags_per_file: int = 50) -> List[Tag]:
