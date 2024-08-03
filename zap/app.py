@@ -17,6 +17,7 @@ from zap.agents.chat_message import ChatMessage
 from zap.app_state import AppState
 from zap.cliux import UI
 from zap.commands import Commands
+from zap.commands.advanced_input import UserInput, AdvancedInput
 from zap.config import AppConfig, load_config
 from zap.constants import FILE_ICONS
 from zap.contexts.agent_template_context import build_agent_template_context
@@ -106,6 +107,13 @@ class ZapApp:
         self.commands = Commands(
             self.config, self.state, self.ui, self.ccm, self.agent_manager
         )
+        self.input = AdvancedInput(
+            registry=self.commands.registry,
+            state=self.state,
+            ui=self.ui,
+            filename_to_path=self.git_analyzer.git_repo.filename_to_paths,
+            symbol_filter={x.name.lower() for t in file_infos.items() for x in t[1].tags}
+        )
 
     async def run(self):
         while True:
@@ -113,11 +121,15 @@ class ZapApp:
                 context = self.context_manager.get_current_context()
                 agent = self.agent_manager.get_agent(context.current_agent)
 
-                user_input = await self.commands.advanced_input.input_async(
+                user_input: UserInput = await self.input.input_async(
                     f"{context.name}:{agent.config.name} {FILE_ICONS['zap']}"
                 )
 
-                await self.handle_input(user_input, context, agent)
+                self.ui.print(f"User input: {user_input.message}")
+                self.ui.print(f"Filepaths: {user_input.file_paths}")
+                self.ui.print(f"Symbols: {user_input.symbols}")
+
+                await self.handle_input(user_input.message, context, agent)
             except KeyboardInterrupt:
                 current_time = time.time()
                 diff = current_time - self.last_interrupt_time
