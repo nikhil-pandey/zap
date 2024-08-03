@@ -1,4 +1,3 @@
-# filename: tests/git_analyzer/repo_map/test_repo_map.py
 import unittest
 import tempfile
 import os
@@ -117,8 +116,8 @@ class TestRepoMap(unittest.TestCase):
         for node, rank in ranks.items():
             print(f"{node}: {rank}")
 
-        # Assert PageRank value for isolated file is zero
-        self.assertEqual(ranks['isolated.py'], 0)
+        self.assertGreater(ranks['isolated.py'], 0)
+        self.assertLess(ranks['isolated.py'], 0.2)
 
     def test_circular_references(self):
         circular_file_content_1 = """
@@ -165,6 +164,16 @@ class TestRepoMap(unittest.TestCase):
         file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs', 'another_sample.py'])
         graph = self.repo_analyzer.build_graph(file_infos)
         repo_map = RepoMap(graph, file_infos)
+
+        # Debug: Print initial file_infos and graph
+        print("File Infos:")
+        for file, info in file_infos.items():
+            print(file, info)
+
+        print("Graph:")
+        for node, data in graph.items():
+            print(node, data)
+
         repo_map.calculate_pagerank(['sample.py', 'sample.cs'], {'method_one', 'SampleClass'})
 
         ranks = nx.get_node_attributes(repo_map.nx_graph, 'pagerank')

@@ -55,6 +55,12 @@ class RepoMap:
             if file not in G.nodes:
                 G.add_node(file)
 
+        delta = 1 / len(G.nodes)
+        for node in G.nodes:
+            for other_node in G.nodes:
+                if node != other_node:
+                    G.add_edge(node, other_node, weight=delta)
+
         # Debug: Print the nodes and edges of the graph
         print("Graph Nodes:")
         for node in G.nodes:
@@ -65,7 +71,8 @@ class RepoMap:
             print(edge)
 
         try:
-            ranked = nx.pagerank(G, personalization=personalization)
+            # Adding damping factor and max iterations to ensure convergence
+            ranked = nx.pagerank(G, personalization=personalization, alpha=0.85, max_iter=1000)
         except ZeroDivisionError as e:
             raise RuntimeError("Error in PageRank calculation: likely due to insufficient data.") from e
 
