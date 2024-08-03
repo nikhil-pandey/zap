@@ -1,22 +1,27 @@
-# filename: zap/git_analyzer/repo_map/d3js_visualizer/app.py
 from flask import Flask, jsonify, send_from_directory, request
 import networkx as nx
 from pathlib import Path
+import asyncio
 from zap.git_analyzer.repo_map.repo_analyzer import RepoAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
 
 app = Flask(__name__)
 
+repo_analyzer = None
+
 
 def get_repo_analyzer():
-    repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
-    config = Config(repo_path)
-    return RepoAnalyzer(config)
+    global repo_analyzer
+    if repo_analyzer is None:
+        repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
+        config = Config(repo_path)
+        repo_analyzer = RepoAnalyzer(config)
+    return repo_analyzer
 
 
 @app.route('/graph')
-def get_graph():
+async def get_graph():
     focus_file = request.args.get('focus_file', '')
     focus_files = focus_file.split(',') if focus_file else []
     mentioned_identifiers = request.args.get('mentioned_identifiers', '')
@@ -34,8 +39,8 @@ def get_graph():
         all_files = [str(p) for p in Path(repo_path).rglob("*.py")]
 
     try:
-        file_infos = repo_analyzer.analyze_files(all_files)
-        graph = repo_analyzer.build_graph(file_infos)
+        file_infos = await repo_analyzer.analyze_files(all_files)
+        graph = await repo_analyzer.build_graph(file_infos)
 
         repo_map = RepoMap(graph, file_infos)
         repo_map.get_ranked_tags_map(focus_files, mentioned_idents, max_files=20, max_tags_per_file=50)
@@ -50,7 +55,7 @@ def get_graph():
 
 
 @app.route('/focus_files')
-def get_focus_files():
+async def get_focus_files():
     repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
     all_files = [str(p) for p in Path(repo_path).rglob("*.py")]
     return jsonify(all_files)
@@ -62,4 +67,10 @@ def index():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    from hypercorn.asyncio import serve
+    from hypercorn.config import Config as HypercornConfig
+
+    config = HypercornConfig()
+    config.bind = ["0.0.0.0:5001"]
+
+    asyncio.run(serve(app, config))

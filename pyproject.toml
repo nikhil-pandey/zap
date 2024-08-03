@@ -29,9 +29,11 @@ tenacity = "^9.0.0"
 networkx = "^3.3"
 tree-sitter-languages = "^1.10.2"
 tree-sitter = "0.21.3"
+aiosqlite = "^0.20.0"
+hypercorn = "^0.17.3"
 
 [tool.poetry.dev-dependencies]
-flask = "^3.0.3"
+flask = {version = "^3.0.3", extras = ["async"]}
 coverage = "^7.6.0"
 pytest-mock = "^3.14.0"
 pytest = "^8.3.2"

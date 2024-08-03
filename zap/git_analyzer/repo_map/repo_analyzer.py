@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import asyncio
 
 from zap.git_analyzer.repo_map.config import Config
 from zap.git_analyzer.repo_map.models import FileInfo, GraphNode, Tag
@@ -14,40 +15,51 @@ class RepoAnalyzer:
         self.tag_extractor = TagExtractor(config.root_path, config.encoding)
         self.cache_manager = CacheManager(os.path.join(self.config.root_path, config.cache_dir))
 
-    def analyze_files(self, file_paths: list[str]) -> dict[str, FileInfo]:
+    async def analyze_files(self, file_paths: list[str]) -> dict[str, FileInfo]:
         file_infos = {}
         root_path = Path(self.config.root_path)
+        tasks = []
+
         for path in file_paths:
-            abs_path = root_path / path
-            rel_path = os.path.relpath(abs_path, self.config.root_path)
-            mtime = os.path.getmtime(abs_path)
+            tasks.append(self._analyze_file(root_path, path))
 
-            cached_data = self.cache_manager.get_cache(rel_path)
-            if cached_data and cached_data['mtime'] == mtime:
-                with open(abs_path, 'r', encoding=self.config.encoding) as f:
-                    content = f.read()
-                file_infos[path] = FileInfo(
-                    path=path,
-                    mtime=mtime,
-                    content=content,
-                    tags=[Tag(**tag) for tag in cached_data['tags']]
-                )
-                continue
+        results = await asyncio.gather(*tasks)
 
-            try:
-                with open(abs_path, 'r', encoding=self.config.encoding) as f:
-                    content = f.read()
-                tags = self.tag_extractor.extract_tags(str(abs_path), content)
-                file_info = FileInfo(path, mtime, content, tags)
+        for path, file_info in results:
+            if file_info:
                 file_infos[path] = file_info
-
-                self.cache_manager.set_cache(rel_path, mtime, [tag.to_dict() for tag in tags])
-            except Exception as e:
-                LOGGER.error(f"Error analyzing file {abs_path}: {str(e)}")
 
         return file_infos
 
-    def build_graph(self, file_infos: dict[str, FileInfo]) -> dict[str, GraphNode]:
+    async def _analyze_file(self, root_path, path):
+        abs_path = root_path / path
+        rel_path = os.path.relpath(abs_path, self.config.root_path)
+        mtime = os.path.getmtime(abs_path)
+
+        cached_data = await self.cache_manager.get_cache(rel_path)
+        if cached_data and cached_data['mtime'] == mtime:
+            with open(abs_path, 'r', encoding=self.config.encoding) as f:
+                content = f.read()
+            file_info = FileInfo(
+                path=path,
+                mtime=mtime,
+                content=content,
+                tags=[Tag(**tag) for tag in cached_data['tags']]
+            )
+            return path, file_info
+
+        try:
+            with open(abs_path, 'r', encoding=self.config.encoding) as f:
+                content = f.read()
+            tags = self.tag_extractor.extract_tags(str(abs_path), content)
+            file_info = FileInfo(path, mtime, content, tags)
+            await self.cache_manager.set_cache(rel_path, mtime, [tag.to_dict() for tag in tags])
+            return path, file_info
+        except Exception as e:
+            LOGGER.error(f"Error analyzing file {abs_path}: {str(e)}")
+            return path, None
+
+    async def build_graph(self, file_infos: dict[str, FileInfo]) -> dict[str, GraphNode]:
         graph = {}
         for file_path, file_info in file_infos.items():
             references = set()
@@ -71,10 +83,10 @@ class RepoAnalyzer:
                                 graph[def_file_path].references.add(file_path)  # Adding reverse reference
         return graph
 
-    def query_symbol(self, symbol: str) -> list[Tag]:
-        # completely rely on the cache for efficient querying and make it as efficient as possible
-        return None
+    async def query_symbol(self, symbol: str) -> list[Tag]:
+        tag_data = await self.cache_manager.query_symbol(symbol)
+        return [Tag(**tag) for tag in tag_data]
 
-    def __del__(self):
+    async def close(self):
         if hasattr(self, 'cache_manager'):
-            self.cache_manager.close()
+            await self.cache_manager.close()
