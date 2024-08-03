@@ -23,6 +23,7 @@ class GitRepo:
         self.file_trie = pygtrie.StringTrie(separator=SEPARATOR)
         # TODO: this is probably unused with the latest implemetnation
         self.suffix_trie = pygtrie.StringTrie(separator=SEPARATOR)
+        self.filename_to_paths = {}
 
     async def refresh(self):
         # TODO: make refresh less frequent for performance
@@ -33,6 +34,11 @@ class GitRepo:
             self.file_trie[entry.path] = True
             path = SEPARATOR.join(reversed(entry.path.split(SEPARATOR)))
             self.suffix_trie[path] = entry.path
+            filename = entry.path.split(SEPARATOR)[-1].lower()
+            filename = os.path.splitext(filename)[0]
+            if filename not in self.filename_to_paths:
+                self.filename_to_paths[filename] = []
+            self.filename_to_paths[filename].append(entry.path)
 
     async def get_tracked_files(self) -> Set[str]:
         await self.refresh()

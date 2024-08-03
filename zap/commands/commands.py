@@ -37,11 +37,6 @@ class Commands:
         self.utilities = UtilityCommands(state, ui)
 
         self._register_commands()
-        self.advanced_input = AdvancedInput(
-            registry=self.registry,
-            state=self.state,
-            ui=self.ui,
-        )
 
     def _register_commands(self):
         # File management commands
