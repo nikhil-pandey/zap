@@ -5,6 +5,7 @@ from litellm import acompletion
 from zap.agents.chat_agent import ChatAgent
 from zap.agents.agent_output import AgentOutput
 from zap.contexts.context import Context
+from zap.utils import get_lite_llm_model
 
 
 class PromptAgent(ChatAgent):
@@ -34,7 +35,7 @@ class PromptAgent(ChatAgent):
             messages.append({"role": "user", "content": message})
 
         response = await acompletion(
-            model=self.config.model,
+            model=await get_lite_llm_model(self.config.provider, self.config.model),
             messages=messages,
         )
 

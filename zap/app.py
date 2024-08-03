@@ -31,6 +31,7 @@ from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import register_tools
 from zap.tools.tool_manager import ToolManager
+from zap.utils import get_tokenizer_model
 
 
 class ZapApp:
@@ -86,7 +87,7 @@ class ZapApp:
         default_agent = self.agent_manager.get_agent(self.config.agent)
         if default_agent.config.model.startswith("gpt"):
             self.state.tokenizer = tiktoken.encoding_for_model(
-                default_agent.config.model
+                await get_tokenizer_model(default_agent.config.provider, default_agent.config.model)
             )
         self.context_manager = ContextManager(self.agent_manager, self.config.agent)
         if self.config.auto_archive_contexts:

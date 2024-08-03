@@ -54,3 +54,16 @@ async def get_file_content(root, file, prefix_lines=True):
         return formatted_content
     except Exception as e:
         return None
+
+
+async def get_lite_llm_model(provider: str, model: str):
+    if provider == "azure":
+        return f"azure/{model}"
+    else:
+        return model
+
+
+async def get_tokenizer_model(provider: str, model: str):
+    if provider == "azure":
+        return model
+    return "gpt-4o"
