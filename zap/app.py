@@ -225,12 +225,14 @@ class ZapApp:
 
     async def chat_async(self, user_input: UserInput, context: Context, agent: Agent):
         template_context = await build_agent_template_context(
-            user_input.message,
+            user_input,
             context,
             agent,
             self.state,
             self.config,
             self.context_manager.contexts,
+            # TODO: make sure this gets updated as files change
+            self.repo_map,
         )
         rendered_input = await self.template_engine.render(user_input.message, template_context)
         output = await agent.process(rendered_input, context, template_context)

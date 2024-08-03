@@ -88,9 +88,9 @@ class AdvancedInput:
         for word in words:
             word_lower = word.lower()
             if word_lower in self.filename_to_path:
-                file_paths.extend(self.filename_to_path[word])
+                file_paths.extend(self.filename_to_path[word_lower])
             if word_lower in self.symbol_filter:
-                symbols.add(word)
+                symbols.add(word_lower)
 
         return file_paths, symbols
 

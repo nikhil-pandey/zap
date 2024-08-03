@@ -52,7 +52,8 @@ class TagExtractor:
                     path=os.path.relpath(fname, self.root_path),
                     name=node.text.decode(self.encoding),
                     kind=kind,
-                    line=node.start_point[0] + 1,
+                    start_line=node.start_point[0] + 1,
+                    end_line=node.end_point[0] + 1,
                     body=body
                 ))
             LOGGER.info(f"Extracted {len(tags)} tags from {fname}")

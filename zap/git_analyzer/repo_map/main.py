@@ -19,14 +19,14 @@ async def main(config: CodeAnalyzerConfig, focus_files: list[str], other_files: 
 
     print("Ranked tags:")
     for tag in ranked_tags:
-        print(f"{tag.path}:{tag.line} - {tag.name} ({tag.kind})")
+        print(f"{tag.path}:{tag.start_line} - {tag.name} ({tag.kind})")
 
     # Example of querying symbol after building the index
     symbol = "initialize"
     tags = await analyzer.query_symbol(symbol)
     print("\nFound tags:")
     for tag in tags:
-        print(f"Found symbol '{symbol}' in {tag.path} at line {tag.line}, {tag.body}")
+        print(f"Found symbol '{symbol}' in {tag.path} at line {tag.start_line}, {tag.body}")
 
 
 if __name__ == "__main__":
