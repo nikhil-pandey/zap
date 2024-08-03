@@ -43,7 +43,7 @@ async def get_file_content(root, file, prefix_lines=True):
 
 
 async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_numbers: bool = False,
-                                      exclude_files: set[str] = None, limit: int = 16000) -> str:
+                                      exclude_files: set[str] = None, limit: int = 5000) -> str:
     files_content = {}
     if exclude_files is None:
         exclude_files = set()
@@ -81,10 +81,12 @@ async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_n
     final_content = []
     total_length = 0
 
-    # Process files and tags in the original order
+    # Track processed files to avoid duplicates
+    processed_files = set()
+
     for tag in tags:
         file_path = tag.path
-        if file_path in exclude_files:
+        if file_path in exclude_files or file_path in processed_files:
             continue
 
         lines = files_content[file_path]
@@ -128,6 +130,7 @@ async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_n
 
         final_content.append(formatted_content)
         total_length += len(formatted_content)
+        processed_files.add(file_path)
 
     return '\n'.join(final_content)
 
@@ -175,11 +178,8 @@ async def extract_xml_blocks(tag: str, text: str) -> list[tuple[str, dict]]:
     return items
 
 
-async def extract_search_replace_blocks(text: str) -> tuple[str, str]:
-    if not text.startswith("<<<<<<< SEARCH"):
-        return '', text
-    pattern = re.compile(r"<<<<<<< SEARCH\n(.*?)=======\n(.*?)\n>>>>>>> REPLACE", re.DOTALL)
+async def extract_search_replace_blocks(text: str) -> list[tuple[str, str]]:
+    pattern = re.compile(r"<<<<<<< SEARCH\n(.*?)\n=======\n(.*?)\n>>>>>>> REPLACE", re.DOTALL)
+    text = text.strip()
     blocks = pattern.findall(text)
-    search_block = blocks[0][0].rstrip('\n')
-    replace_block = blocks[0][1]
-    return search_block, replace_block
+    return [(block[0].rstrip('\n'), block[1].rstrip('\n')) for block in blocks]

@@ -288,8 +288,7 @@ class ReplaceBlockTool(Tool):
         full_path = os.path.join(self.app_state.git_repo.root, filename)
         if not full_path.startswith(self.app_state.git_repo.root):
             raise ValueError("Path is outside the repository boundary.")
-        if not os.path.exists(full_path):
-            # create the file if it does not exist
+        if not os.path.exists(full_path) or search_block is None or search_block == "":
             os.makedirs(os.path.dirname(full_path), exist_ok=True)
             with open(full_path, "w", encoding="utf-8") as file:
                 file.write(replace_block)

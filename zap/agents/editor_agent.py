@@ -23,8 +23,9 @@ class EditorAgent(CodeAgent):
                 if not filename:
                     LOGGER.warning('No filename attribute found in action block')
                     continue
-                search_block, replace_block = await extract_search_replace_blocks(block)
-                await self.create_or_update_file(filename, search_block, replace_block)
+                could_be_blocks = await extract_search_replace_blocks(block)
+                for search_block, replace_block in could_be_blocks:
+                    await self.create_or_update_file(filename, search_block, replace_block)
         return output
 
     async def create_or_update_file(self, filename, search_block, replace_block):
