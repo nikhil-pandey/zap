@@ -125,16 +125,16 @@ def set_environment_variables(args):
     if args.verbose:
         # print env variables partially for debugging
         litellm.set_verbose = True
-        print("Environment Variables:")
-        print(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', '')[:6]}...")
-        print(f"ANTHROPIC_API_KEY: {os.getenv('ANTHROPIC_API_KEY', '')[:6]}...")
-        print(f"REPLICATE_API_KEY: {os.getenv('REPLICATE_API_KEY', '')[:6]}...")
-        print(f"TOGETHERAI_API_KEY: {os.getenv('TOGETHERAI_API_KEY', '')[:6]}...")
-        print(f"AZURE_API_BASE: {os.getenv('AZURE_API_BASE', '')}")
-        print(f"AZURE_API_VERSION: {os.getenv('AZURE_API_VERSION', '')}")
-        print(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')}")
-        print(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')}...")
-        print()
+        LOGGER.info("Environment Variables:")
+        LOGGER.info(f"OPENAI_API_KEY: {os.getenv('OPENAI_API_KEY', '')[:6]}...")
+        LOGGER.info(f"ANTHROPIC_API_KEY: {os.getenv('ANTHROPIC_API_KEY', '')[:6]}...")
+        LOGGER.info(f"REPLICATE_API_KEY: {os.getenv('REPLICATE_API_KEY', '')[:6]}...")
+        LOGGER.info(f"TOGETHERAI_API_KEY: {os.getenv('TOGETHERAI_API_KEY', '')[:6]}...")
+        LOGGER.info(f"AZURE_API_BASE: {os.getenv('AZURE_API_BASE', '')}")
+        LOGGER.info(f"AZURE_API_VERSION: {os.getenv('AZURE_API_VERSION', '')}")
+        LOGGER.info(f"AZURE_API_TYPE: {os.getenv('AZURE_API_TYPE', '')}")
+        LOGGER.info(f"OPENAI_API_BASE: {os.getenv('OPENAI_API_BASE', '')}...")
+        LOGGER.info()
 
 
 async def initialize_config(args):
@@ -150,7 +150,7 @@ async def initialize_config(args):
         yaml.safe_dump(dataclasses.asdict(config), f)
     LOGGER.info(f"Config file initialized at {config_path}")
 
-    print(f"Config file initialized at {config_path}")
+    LOGGER.info(f"Config file initialized at {config_path}")
 
 
 async def initialize_templates(args):
@@ -176,15 +176,13 @@ async def initialize_templates(args):
                 async with aiofiles.open(dest_file, "w") as f:
                     await f.write(content)
 
-    print(f"Templates directory initialized at {dest_dir}")
-    print()
-    print("Please make sure to update the templates_dir in the config file.")
-    print("You can find the config file at ~/.zap/config.yaml")
-    print(
-        "If you haven't initialized the config file, you can do so using --init-config"
-    )
-    print()
-    print("Happy Zapping!")
+    LOGGER.info(f"Templates directory initialized at {dest_dir}")
+    LOGGER.info()
+    LOGGER.info("Please make sure to update the templates_dir in the config file.")
+    LOGGER.info("You can find the config file at ~/.zap/config.yaml")
+    LOGGER.info("If you haven't initialized the config file, you can do so using --init-config")
+    LOGGER.info()
+    LOGGER.info("Happy Zapping!")
     return
 
 
@@ -202,9 +200,9 @@ async def main():
             for file in context_dir.rglob("*"):
                 if file.is_file():
                     file.unlink()
-            print("Context files cleared.")
+            LOGGER.info("Context files cleared.")
         else:
-            print("No context files found.")
+            LOGGER.info("No context files found.")
     else:
         app = ZapApp()
         await app.initialize(args)

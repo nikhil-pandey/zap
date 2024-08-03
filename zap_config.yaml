@@ -3,8 +3,8 @@ auto_archive_contexts: false
 auto_load_contexts: true
 auto_persist_contexts: true
 build_command: poetry build
-lint_command: powershell scripts/lint.ps1
-test_command: powershell scripts/test_with_coverage.ps1
+lint_command: ./scripts/lint.sh
+test_command: ./scripts/test_with_coverage.sh
 dependency_manager: null
 git_analyzer_config:
   commit_limit: 10
