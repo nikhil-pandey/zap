@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Visualization</title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2b2b2b;
+            margin: 0;
+            padding: 0;
+            color: #ccc;
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+        }
+
+        svg {
+            display: block;
+            margin: auto;
+            background-color: #1b1b1b;
+            border: 1px solid #444;
+        }
+
+        .node {
+            stroke: #fff;
+            stroke-width: 1.5px;
+        }
+
+        .link {
+            stroke: #bbb;
+            stroke-opacity: 0.6;
+        }
+
+        text {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            pointer-events: none;
+            fill: #fff;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: auto;
+            padding: 5px;
+            font: 12px sans-serif;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #444;
+            color: #fff;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        #focus-file-select, #mentioned-idents-input, #repo-path-input {
+            display: block;
+            margin: 10px auto;
+            padding: 5px;
+            font-size: 16px;
+            width: 400px;
+            color: #000;
+        }
+
+        #legend, #top-pageranks {
+            text-align: center;
+            margin: 10px;
+        }
+
+        .legend-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 5px;
+        }
+
+        #search-box {
+            display: block;
+            margin: 10px auto;
+            padding: 5px;
+            font-size: 16px;
+            width: 200px;
+        }
+
+        #download-btn, #analyze-btn {
+            display: block;
+            margin: 10px auto;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        #loading-spinner {
+            display: none;
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<h1>Graph Visualization</h1>
+<input type="text" id="repo-path-input" placeholder="Enter repo URL or file path">
+<button id="analyze-btn">Analyze</button>
+<div id="loading-spinner"></div>
+<input type="text" id="search-box" placeholder="Search File">
+<select id="focus-file-select" multiple size="10">
+    <option value="">Select Focus Files</option>
+</select>
+<input type="text" id="mentioned-idents-input" placeholder="Mentioned Identifiers (comma separated)">
+<div id="legend">
+    <div><span class="legend-color" style="background-color: #d73027;"></span>High PageRank</div>
+    <div><span class="legend-color" style="background-color: #fee08b;"></span>Medium PageRank</div>
+    <div><span class="legend-color" style="background-color: #313695;"></span>Low PageRank</div>
+</div>
+<div id="top-pageranks">
+    <h2>Top PageRank Files</h2>
+    <ul id="pagerank-list"></ul>
+</div>
+<button id="download-btn">Download Graph</button>
+<svg width="960" height="600"></svg>
+<script>
+    const width = 960;
+    const height = 600;
+
+    const svg = d3.select("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .call(d3.zoom().on("zoom", (event) => {
+            svg.attr("transform", event.transform);
+        }))
+        .append("g");
+
+    const color = d3.scaleSequential(d3.interpolateRdYlBu).domain([1, 0]);  // Invert the range
+
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip");
+
+    const repoPathInput = document.getElementById('repo-path-input');
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const focusFileSelect = document.getElementById('focus-file-select');
+    const searchBox = document.getElementById('search-box');
+    const mentionedIdentsInput = document.getElementById('mentioned-idents-input');
+    const pagerankList = document.getElementById('pagerank-list');
+    const downloadBtn = document.getElementById('download-btn');
+    const loadingSpinner = document.getElementById('loading-spinner');
+
+    function trimPath(path) {
+        const parts = path.split('/');
+        return parts.slice(-3).join('/');
+    }
+
+    function loadFocusFiles() {
+        d3.json("/focus_files").then(function (files) {
+            files.forEach(function (file) {
+                const option = document.createElement("option");
+                option.value = file;
+                option.text = trimPath(file);
+                focusFileSelect.appendChild(option);
+            });
+        });
+    }
+
+    function loadGraph(focusFiles, mentionedIdents) {
+        const url = new URL('/graph', window.location.origin);
+        if (focusFiles.length) {
+            url.searchParams.append('focus_file', focusFiles.join(','));
+        }
+        if (mentionedIdents.length) {
+            url.searchParams.append('mentioned_identifiers', mentionedIdents.join(','));
+        }
+
+        loadingSpinner.style.display = 'block';
+        analyzeBtn.disabled = true;
+
+        d3.json(url).then(function (graph) {
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
+
+            svg.selectAll("*").remove();
+
+            const nodeById = {};
+            graph.nodes.forEach(node => nodeById[node.id] = node);
+
+            const links = graph.links.map(link => ({
+                source: nodeById[link.source],
+                target: nodeById[link.target]
+            }));
+
+            // Normalize PageRank values to a range of [0, 1]
+            const pagerankValues = graph.nodes.map(node => node.pagerank);
+            const minPagerank = Math.min(...pagerankValues);
+            const maxPagerank = Math.max(...pagerankValues);
+            const normalizedRange = maxPagerank - minPagerank > 0 ? maxPagerank - minPagerank : 1;
+            graph.nodes.forEach(node => {
+                node.normalizedPagerank = (node.pagerank - minPagerank) / normalizedRange;
+            });
+
+            const simulation = d3.forceSimulation(graph.nodes)
+                .force("link", d3.forceLink(links).id(d => d.id).distance(d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? 50 : 100))
+                .force("charge", d3.forceManyBody().strength(d => focusFiles.includes(d.id) ? -500 : -300))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            const link = svg.append("g")
+                .attr("class", "links")
+                .selectAll("line")
+                .data(links)
+                .enter().append("line")
+                .attr("class", "link")
+                .attr("stroke", d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? "#f00" : "#bbb")
+                .attr("stroke-width", d => focusFiles.includes(d.source.id) || focusFiles.includes(d.target.id) ? 2 : 1);
+
+            const node = svg.append("g")
+                .attr("class", "nodes")
+                .selectAll("g")
+                .data(graph.nodes)
+                .enter().append("g")
+                .attr("class", "node")
+                .call(d3.drag()
+                    .on("start", dragstarted)
+                    .on("drag", dragged)
+                    .on("end", dragended));
+
+            node.append("circle")
+                .attr("r", d => Math.max(10, Math.min(20, d.normalizedPagerank * 50)))
+                .attr("fill", d => focusFiles.includes(d.id) ? "#ff0" : color(d.normalizedPagerank))
+                .on("mouseover", (event, d) => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html(`ID: ${d.id}<br>PageRank: ${d.pagerank.toFixed(4)}`)
+                        .style("left", (event.pageX + 5) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", (event, d) => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            node.append("title")
+                .text(d => d.id);
+
+            node.append("rect")
+                .attr("x", 12)
+                .attr("y", -8)
+                .attr("width", d => trimPath(d.id).length * 6.5)
+                .attr("height", 16)
+                .attr("fill", "black")
+                .attr("stroke", "black")
+                .attr("stroke-width", 0.5);
+
+            node.append("text")
+                .attr("dx", 15)
+                .attr("dy", ".35em")
+                .text(d => trimPath(d.id))
+                .style("fill", "#fff");
+
+            simulation.on("tick", () => {
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("transform", d => `translate(${d.x},${d.y})`);
+            });
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+            // Update the top PageRank section
+            updateTopPageRanks(graph.nodes);
+        }).catch(function (error) {
+            loadingSpinner.style.display = 'none';
+            analyzeBtn.disabled = false;
+            console.error("Error loading graph data:", error);
+        });
+    }
+
+    function updateTopPageRanks(nodes) {
+        const sortedNodes = nodes.sort((a, b) => b.pagerank - a.pagerank).slice(0, 10);
+        pagerankList.innerHTML = "";
+        sortedNodes.forEach(node => {
+            const listItem = document.createElement("li");
+            listItem.textContent = `${trimPath(node.id)}: ${node.pagerank.toFixed(4)}`;
+            pagerankList.appendChild(listItem);
+        });
+    }
+
+    function downloadGraph() {
+        const svgElement = document.querySelector("svg");
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgElement);
+        const a = document.createElement("a");
+        a.href = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(source);
+        a.download = "graph.svg";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    focusFileSelect.addEventListener('change', function () {
+        const focusFiles = Array.from(focusFileSelect.selectedOptions).map(option => option.value);
+        const mentionedIdents = mentionedIdentsInput.value.split(',').map(ident => ident.trim()).filter(Boolean);
+        loadGraph(focusFiles, mentionedIdents);
+    });
+
+    mentionedIdentsInput.addEventListener('input', function () {
+        const focusFiles = Array.from(focusFileSelect.selectedOptions).map(option => option.value);
+        const mentionedIdents = mentionedIdentsInput.value.split(',').map(ident => ident.trim()).filter(Boolean);
+        loadGraph(focusFiles, mentionedIdents);
+    });
+
+    searchBox.addEventListener('input', function () {
+        const searchTerm = searchBox.value.toLowerCase();
+        Array.from(focusFileSelect.options).forEach(option => {
+            option.hidden = !option.value.toLowerCase().includes(searchTerm);
+        });
+    });
+
+    downloadBtn.addEventListener('click', downloadGraph);
+
+    analyzeBtn.addEventListener('click', function () {
+        const repoPath = repoPathInput.value;
+        if (repoPath) {
+            analyzeBtn.disabled = true;
+            loadingSpinner.style.display = 'block';
+            fetch(`/analyze?repo_path=${encodeURIComponent(repoPath)}`)
+                .then(response => response.json())
+                .then(data => {
+                    analyzeBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        loadFocusFiles();
+                        loadGraph([], []);
+                    }
+                })
+                .catch(error => {
+                    analyzeBtn.disabled = false;
+                    loadingSpinner.style.display = 'none';
+                    console.error("Error analyzing repository:", error);
+                });
+        } else {
+            alert("Please enter a repository URL or file path.");
+        }
+    });
+
+    loadFocusFiles();
+    loadGraph([], []);
+</script>
+</body>
+</html>

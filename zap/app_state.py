@@ -2,7 +2,7 @@ from typing import Optional, Set
 
 from zap.config import AppConfig
 from zap.git_analyzer.models.exploration_result import ExplorationResult
-from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.git_repo import GitRepo
 
 
 class AppState:

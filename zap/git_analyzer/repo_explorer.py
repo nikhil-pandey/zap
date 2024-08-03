@@ -2,11 +2,11 @@ import asyncio
 from typing import Dict, List, Tuple
 
 from .git_repo import GitRepo
-from ..config import GitAnalyzerConfig
-from ..logger import LOGGER
-from ..models.dependency import DependencyInfo, ProjectInfo, CommitInfo
-from ..models.exploration_result import ExplorationResult
-from ..parsers.factory import ParserFactory
+from zap.git_analyzer.config import GitAnalyzerConfig
+from zap.git_analyzer.logger import LOGGER
+from zap.git_analyzer.models.dependency import DependencyInfo, ProjectInfo, CommitInfo
+from zap.git_analyzer.models.exploration_result import ExplorationResult
+from zap.git_analyzer.parsers.factory import ParserFactory
 
 
 class RepoExplorer:

@@ -42,10 +42,10 @@ Run the following code to analyze a Python or DotNet project repository:
 
 ```python
 import asyncio
-from zap.git_analyzer.analyzer import analyze_repo
 
 async def analyze_repo_example():
-    result = await analyze_repo("/path/to/your/repo")
+    repo = GitAnalyzer("/path/to/your/repo", GitAnalyzerConfig())
+    result = await repo.analyze()
     print(result)
 
 asyncio.run(analyze_repo_example())
@@ -67,11 +67,11 @@ Create a custom configuration for the analyzer:
     ```python
     import asyncio
     from zap.git_analyzer.config import GitAnalyzerConfig
-    from zap.git_analyzer.analyzer import analyze_repo
 
     async def analyze_with_custom_config():
         config = GitAnalyzerConfig.from_file("/path/to/config.yaml")
-        result = await analyze_repo("/path/to/repo", config)
+        repo = GitAnalyzer("/path/to/repo", config)
+        result = await repo.analyze()
         print(result)
 
     asyncio.run(analyze_with_custom_config())
@@ -84,16 +84,19 @@ Create a custom configuration for the analyzer:
 **Description**: Fetch information from the Git repository.
 
 **Usage**:
+
 ```python
-from zap.git_analyzer.repo.git_repo import GitRepo
+from zap.git_analyzer.git_repo import GitRepo
 
 repo = GitRepo("/path/to/repo")
+
 
 async def repo_operations():
     tracked_files = await repo.get_tracked_files()
     content = await repo.get_file_content("README.md")
     print(tracked_files)
     print(content)
+
 
 asyncio.run(repo_operations())
 ```
@@ -158,10 +161,12 @@ asyncio.run(parse_javascript_dependencies())
 **Description**: Orchestrates the exploration of a Git repository.
 
 **Usage**:
+
 ```python
-from zap.git_analyzer.repo.git_repo import GitRepo
-from zap.git_analyzer.repo.repo_explorer import RepoExplorer
+from zap.git_analyzer.git_repo import GitRepo
+from zap.git_analyzer.repo_explorer import RepoExplorer
 from zap.git_analyzer.config import GitAnalyzerConfig
+
 
 async def explore_repository():
     git_repo = GitRepo("/path/to/repo")
@@ -169,6 +174,7 @@ async def explore_repository():
     explorer = RepoExplorer(git_repo, config)
     result = await explorer.explore()
     print(result)
+
 
 asyncio.run(explore_repository())
 ```

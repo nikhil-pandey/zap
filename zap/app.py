@@ -24,6 +24,9 @@ from zap.contexts.context import Context
 from zap.contexts.context_command_manager import ContextCommandManager
 from zap.contexts.context_manager import ContextManager
 from zap.git_analyzer import GitAnalyzer
+from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
+from zap.git_analyzer.repo_map.codeanalyzerconfig import CodeAnalyzerConfig
+from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import register_tools
 from zap.tools.tool_manager import ToolManager
@@ -55,6 +58,15 @@ class ZapApp:
         self.state.repo_metadata = repo_info
         self.state.git_repo = self.git_analyzer.git_repo
         self.state.config = self.config
+
+        # repo map
+        code_analyzer = CodeAnalyzerConfig(
+            root_path=self.state.git_repo.root,
+        )
+        self.code_analyzer = CodeAnalyzer(code_analyzer)
+        file_infos = await self.code_analyzer.analyze_files(await self.git_analyzer.git_repo.get_tracked_files())
+        graph = await self.code_analyzer.build_graph(file_infos)
+        self.repo_map = RepoMap(graph, file_infos)
 
         # Initialize ContextManager and ChatAgent
         self.template_engine = ZapTemplateEngine(
