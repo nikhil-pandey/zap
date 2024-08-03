@@ -142,11 +142,13 @@ async def initialize_config(args):
     if not config_path.parent.exists():
         config_path.parent.mkdir(parents=True)
     if os.path.exists(config_path) and not args.force:
-        print("Config file already exists.")
+        LOGGER.info("Config file already exists.")
+
         return
     with open(config_path, "w") as f:
         config: AppConfig = load_config(args)
         yaml.safe_dump(dataclasses.asdict(config), f)
+    LOGGER.info(f"Config file initialized at {config_path}")
 
     print(f"Config file initialized at {config_path}")
 
@@ -156,7 +158,7 @@ async def initialize_templates(args):
     dest_dir = Path.home() / ".zap" / "templates"
     if dest_dir.exists():
         if not args.force:
-            print("Templates directory already exists.")
+            LOGGER.info("Templates directory already exists.")
             return
         else:
             for file in dest_dir.rglob("*"):

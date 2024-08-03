@@ -45,12 +45,13 @@ class ReadFileTool(Tool):
             raise ValueError("Path is outside the repository boundary.")
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File {filename} does not exist.")
-        with open(full_path, "r") as file:
+        with open(full_path, "r", encoding='utf-8') as file:
             lines = file.readlines()
 
         # Prefix lines with line numbers
-        prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
-        content = "".join(prefixed_lines)
+        # prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
+        # content = "".join(prefixed_lines)
+        content = "".join(lines)
 
         return {"status": "success", "content": content, "size": len(content)}
 
@@ -276,7 +277,7 @@ class EditFileTool(Tool):
 
 class ReplaceBlockTool(Tool):
     def __init__(self, app_state: AppState):
-        super().__init__("replace_block", "Replace a block of text in a file within the repository boundary.")
+        super().__init__("search_replace", "Replace a block of text in a file.")
         self.app_state = app_state
 
     async def execute(
