@@ -29,6 +29,5 @@ jobs:
 
     - name: Run Publish Script
       run: |
-        poetry shell
         chmod +x scripts/publish.sh
         ./scripts/publish.sh

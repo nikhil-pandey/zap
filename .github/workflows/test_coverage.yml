@@ -27,7 +27,6 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        poetry shell
         chmod +x scripts/test_with_coverage.sh
         ./scripts/test_with_coverage.sh
 
