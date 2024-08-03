@@ -1,3 +1,6 @@
+import json
+import os
+
 from zap.agents.chat_agent import CodeAgent
 from zap.agents.agent_output import AgentOutput
 from zap.contexts.context import Context
@@ -31,3 +34,9 @@ class EditorAgent(CodeAgent):
             replace_block=replace_block
         )
         LOGGER.info(f'Updated file {filename}')
+
+    async def get_examples(self) -> list[dict]:
+        examples_files = os.path.join(os.path.dirname(self.config.system_prompt), 'examples.json')
+        examples_file_content = await self.engine.render_file(examples_files)
+        examples = json.loads(examples_file_content)
+        return list(item for sublist in examples for item in sublist)

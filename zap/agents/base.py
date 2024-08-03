@@ -105,6 +105,9 @@ class Agent(ABC):
                 self.config.system_prompt, template_context
             )
             messages.append({"role": "system", "content": system_prompt})
+            examples = await self.get_examples()
+            if examples:
+                messages.extend(examples)
 
             if self.config.user_prompt:
                 user_prompt = await self.engine.render_file(
@@ -225,3 +228,6 @@ class Agent(ABC):
     @tool_executor
     async def handle_tool_call(self, tool, function_args):
         return await tool.execute(**function_args)
+
+    async def get_examples(self) -> list[dict]:
+        return []
