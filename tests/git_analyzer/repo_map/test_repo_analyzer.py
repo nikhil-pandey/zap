@@ -1,6 +1,9 @@
 import unittest
 import tempfile
 import os
+
+import pytest
+
 from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
 from zap.git_analyzer.repo_map.codeanalyzerconfig import CodeAnalyzerConfig
 
@@ -10,8 +13,8 @@ class TestRepoAnalyzer(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
         self.repo_path = self.test_dir.name
-        self.config = CodeAnalyzerConfig()
-        self.repo_analyzer = CodeAnalyzer(self.repo_path, self.config)
+        self.config = CodeAnalyzerConfig(self.repo_path)
+        self.repo_analyzer = CodeAnalyzer(self.config)
 
         self.python_file_content = """
         class SampleClass:
@@ -48,16 +51,18 @@ class TestRepoAnalyzer(unittest.TestCase):
     def tearDown(self):
         self.test_dir.cleanup()
 
-    def test_analyze_files(self):
-        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs'])
+    @pytest.mark.asyncio
+    async def test_analyze_files(self):
+        file_infos = await self.repo_analyzer.analyze_files(['sample.py', 'sample.cs'])
         self.assertIn('sample.py', file_infos)
         self.assertIn('sample.cs', file_infos)
         self.assertEqual(len(file_infos['sample.py'].tags), 3)
         self.assertEqual(len(file_infos['sample.cs'].tags), 5)
 
-    def test_build_graph(self):
-        file_infos = self.repo_analyzer.analyze_files(['sample.py', 'sample.cs'])
-        graph = self.repo_analyzer.build_graph(file_infos)
+    @pytest.mark.asyncio
+    async def test_build_graph(self):
+        file_infos = await self.repo_analyzer.analyze_files(['sample.py', 'sample.cs'])
+        graph = await self.repo_analyzer.build_graph(file_infos)
         self.assertIn('sample.py', graph)
         self.assertIn('sample.cs', graph)
         self.assertEqual(len(graph['sample.py'].definitions), 3)

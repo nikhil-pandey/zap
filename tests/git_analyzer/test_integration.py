@@ -39,7 +39,7 @@ def complex_repo(temp_git_repo):
     os.system('git commit -m "Add feature"')
 
     # Switch back to main branch and create a merge commit
-    os.system("git checkout master")  # Use 'master' instead of 'main'
+    os.system("git checkout main")  # Use 'main' instead of 'main'
     os.system('git merge feature-branch --no-ff -m "Merge feature branch"')
 
     return temp_git_repo
