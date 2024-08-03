@@ -1,0 +1,33 @@
+Here is some information about my system and the project:
+
+- **Operating System**: {{ os }}
+- **Shell**: {{ shell }}
+- **CPU Count**: {{ cpus }}
+- **Current Date and Time**: {{ datetime }}
+- **Message from User**: {{ message }}
+
+### Project Metadata:
+- **Dependencies**:
+{% for file, info in repo_metadata['project_info']['dependencies'].items() %}
+    - **File**: {{ file }}
+    - **Language**: {{ info.language }}
+    - **Package Manager**: {{ info.package_manager }}
+    - **Dependencies**:
+    {% for dep in info.dependencies %}
+        - {{ dep }}
+    {% endfor %}
+{% endfor %}
+
+### Repository Map:
+
+{{ repo_map }}
+
+### Content of Relevant Files:
+
+{{ files }}
+
+---
+
+<task>
+    {{ message }}
+</task>

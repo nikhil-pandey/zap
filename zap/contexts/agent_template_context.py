@@ -34,7 +34,8 @@ async def build_agent_template_context(
         max_files=100,
         max_tags_per_file=1000,
     )
-    repo_map = await get_files_content_from_tags(state.git_repo.root, ranked_tags)
+    repo_map = await get_files_content_from_tags(state.git_repo.root, ranked_tags, prepend_line_numbers=True,
+                                                 exclude_files=list_of_files, limit=20000)
 
     output = {
         "os": platform.system(),

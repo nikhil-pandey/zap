@@ -3,7 +3,7 @@ import platform
 import aiofiles
 import re
 from collections import defaultdict
-from itertools import groupby
+import heapq
 
 from zap.constants import EXTENSION_TO_COMMENT
 from zap.git_analyzer.repo_map.models import Tag
@@ -42,11 +42,14 @@ async def get_file_content(root, file, prefix_lines=True):
         return None
 
 
-async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_numbers: bool = False) -> str:
+async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_numbers: bool = False,
+                                      exclude_files: set[str] = None, limit: int = 16000) -> str:
     files_content = {}
+    if exclude_files is None:
+        exclude_files = set()
 
     # Collect unique file paths
-    file_paths = set(tag.path for tag in tags)
+    file_paths = set(tag.path for tag in tags if tag.path not in exclude_files)
 
     # Read each file's content
     for file_path in file_paths:
@@ -76,10 +79,15 @@ async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_n
 
     # Collect content based on merged ranges and format it as markdown
     final_content = []
+    total_length = 0
 
-    for file_path in file_paths:
+    # Process files and tags in the original order
+    for tag in tags:
+        file_path = tag.path
+        if file_path in exclude_files:
+            continue
+
         lines = files_content[file_path]
-        current_line = 0
         ext = os.path.splitext(file_path)[1].lstrip(".").lower()
         comment_start = EXTENSION_TO_COMMENT.get(ext, "#")
         file_content = []
@@ -89,8 +97,8 @@ async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_n
         if prepend_line_numbers:
             first_line = f"001| {first_line}"
         file_content.append(first_line)
-        current_line = 1
 
+        current_line = 1
         for start_line, end_line in merged_ranges[file_path]:
             if current_line < start_line - 1:
                 file_content.append("...\n")
@@ -114,7 +122,12 @@ async def get_files_content_from_tags(root: str, tags: list[Tag], prepend_line_n
         formatted_content = (
             f"```{ext}\n{comment_start} filename: {file_path}\n" + ''.join(file_content) + "\n```"
         )
+
+        if total_length + len(formatted_content) > limit:
+            break
+
         final_content.append(formatted_content)
+        total_length += len(formatted_content)
 
     return '\n'.join(final_content)
 

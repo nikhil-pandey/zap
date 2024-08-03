@@ -1,3 +1,4 @@
 name: editor
 type: EditorAgent
 system_prompt: prompts/editor/system.j2
+user_prompt: prompts/editor/user.j2
