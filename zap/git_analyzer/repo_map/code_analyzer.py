@@ -11,21 +11,21 @@ from zap.git_analyzer.repo_map.tag_extractor import TagExtractor
 from zap.git_analyzer.repo_map.cache_manager import CacheManager
 from zap.git_analyzer.logger import LOGGER
 
-
 class CodeAnalyzer:
     def __init__(self, config: Config):
         self.config = config
         self.temp_dir = None
         self._clone_repo_if_needed()
-        # After the clone
         self.tag_extractor = TagExtractor(self.config.root_path, config.encoding)
         self.cache_manager = CacheManager(str(os.path.join(self.config.root_path, config.cache_dir)))
+        LOGGER.info(f"CodeAnalyzer initialized for {self.config.root_path}")
 
     def _clone_repo_if_needed(self):
         if self.config.repo_url:
             self.temp_dir = str(tempfile.mkdtemp())
             pygit2.clone_repository(self.config.repo_url, self.temp_dir, depth=1)
             self.config.update_root_path(str(self.temp_dir))
+            LOGGER.info(f"Repository cloned to temporary directory {self.temp_dir}")
 
     async def analyze_files(self, file_paths: list[str]) -> dict[str, FileInfo]:
         file_infos = {}
@@ -41,6 +41,7 @@ class CodeAnalyzer:
             if file_info:
                 file_infos[path] = file_info
 
+        LOGGER.info(f"Analyzed {len(file_infos)} files")
         return file_infos
 
     async def _analyze_file(self, root_path, path):
@@ -58,6 +59,7 @@ class CodeAnalyzer:
                 content=content,
                 tags=[Tag(**tag) for tag in cached_data['tags']]
             )
+            LOGGER.info(f"Loaded file '{path}' from cache")
             return path, file_info
 
         try:
@@ -66,6 +68,7 @@ class CodeAnalyzer:
             tags = self.tag_extractor.extract_tags(str(abs_path), content)
             file_info = FileInfo(path, mtime, content, tags)
             await self.cache_manager.set_cache(rel_path, mtime, [tag.to_dict() for tag in tags])
+            LOGGER.info(f"File '{path}' analyzed and cached")
             return path, file_info
         except Exception as e:
             LOGGER.error(f"Error analyzing file {abs_path}: {str(e)}")
@@ -83,22 +86,23 @@ class CodeAnalyzer:
                     references.add(tag.name)
             graph[file_path] = GraphNode(file_path, references, definitions)
 
-        # Adding relations between files based on references and definitions
         for file_path, file_info in file_infos.items():
             for tag in file_info.tags:
                 if tag.kind == "ref":
                     for def_file_path, def_file_info in file_infos.items():
                         if tag.name in [d.name for d in def_file_info.tags if d.kind == "def"]:
-                            # Ensure bi-directional edge
                             if file_path != def_file_path:
                                 graph[file_path].references.add(def_file_path)
-                                graph[def_file_path].references.add(file_path)  # Adding reverse reference
+                                graph[def_file_path].references.add(file_path)
+        LOGGER.info(f"Graph built with {len(graph)} nodes")
         return graph
 
     async def query_symbol(self, symbol: str) -> list[Tag]:
         tag_data = await self.cache_manager.query_symbol(symbol)
+        LOGGER.info(f"Symbol '{symbol}' queried with {len(tag_data)} results")
         return [Tag(**tag) for tag in tag_data]
 
     async def close(self):
         if self.temp_dir:
             shutil.rmtree(self.temp_dir)
+            LOGGER.info(f"Temporary directory {self.temp_dir} removed")

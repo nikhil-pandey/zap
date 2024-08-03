@@ -5,29 +5,29 @@ import asyncio
 from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
+from zap.git_analyzer.logger import LOGGER
 
 app = Flask(__name__)
 
 repo_analyzer = None
-
 
 def get_repo_analyzer(repo_path=None):
     global repo_analyzer
     if repo_analyzer is None or repo_path:
         config = Config(repo_path, repo_url=repo_path if repo_path and repo_path.startswith(("http://", "https://")) else None)
         repo_analyzer = CodeAnalyzer(config)
+        LOGGER.info(f"RepoAnalyzer initialized for {repo_path}")
     return repo_analyzer
-
 
 @app.route('/analyze')
 async def analyze_repo():
     repo_path = request.args.get('repo_path', '')
     if not repo_path:
+        LOGGER.error("No repository URL or file path provided")
         return jsonify({'error': 'No repository URL or file path provided'}), 400
 
     repo_analyzer = get_repo_analyzer(repo_path)
     try:
-        # Assume focus_files and other_files are empty initially; you can extend this as needed.
         focus_files = []
         other_files = [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py") if p not in focus_files]
         all_files = focus_files + other_files
@@ -38,15 +38,16 @@ async def analyze_repo():
         graph = await repo_analyzer.build_graph(file_infos)
         repo_map = RepoMap(graph, file_infos)
 
-        # Preload focus files in the front-end
+        LOGGER.info(f"Repository {repo_path} analyzed successfully")
         return jsonify({
             'focus_files': [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py")]
         })
     except ValueError as e:
+        LOGGER.error(f"ValueError: {str(e)}")
         return jsonify({'error': str(e)}), 400
     except RuntimeError as e:
+        LOGGER.error(f"RuntimeError: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/graph')
 async def get_graph():
@@ -56,6 +57,7 @@ async def get_graph():
     mentioned_idents = set(mentioned_identifiers.split(',')) if mentioned_identifiers else set()
 
     if not focus_files:
+        LOGGER.error("No focus files provided")
         return jsonify({'error': 'No focus files provided'}), 400
 
     repo_analyzer = get_repo_analyzer()
@@ -73,27 +75,27 @@ async def get_graph():
         repo_map = RepoMap(graph, file_infos)
         repo_map.get_ranked_tags_map(focus_files, mentioned_idents, max_files=20, max_tags_per_file=50)
 
-        # Convert the graph to JSON
         data = nx.node_link_data(repo_map.nx_graph)
+        LOGGER.info("Graph data generated successfully")
         return jsonify(data)
     except ValueError as e:
+        LOGGER.error(f"ValueError: {str(e)}")
         return jsonify({'error': str(e)}), 400
     except RuntimeError as e:
+        LOGGER.error(f"RuntimeError: {str(e)}")
         return jsonify({'error': str(e)}), 500
-
 
 @app.route('/focus_files')
 async def get_focus_files():
     repo_analyzer = get_repo_analyzer()
     repo_path = repo_analyzer.config.root_path
     all_files = [str(p) for p in Path(repo_path).rglob("*.py")]
+    LOGGER.info("Focus files fetched")
     return jsonify(all_files)
-
 
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
-
 
 if __name__ == "__main__":
     from hypercorn.asyncio import serve
@@ -102,5 +104,5 @@ if __name__ == "__main__":
     config = HypercornConfig()
     config.bind = ["0.0.0.0:5001"]
 
+    LOGGER.info("Starting server")
     asyncio.run(serve(app, config))
-
