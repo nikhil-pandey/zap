@@ -12,7 +12,7 @@ from zap.git_analyzer.repo_map.cache_manager import CacheManager
 from zap.git_analyzer.logger import LOGGER
 
 
-class RepoAnalyzer:
+class CodeAnalyzer:
     def __init__(self, config: Config):
         self.config = config
         self.temp_dir = None

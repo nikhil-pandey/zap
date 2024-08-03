@@ -3,13 +3,13 @@ import sys
 from pathlib import Path
 import asyncio
 
-from repo_analyzer import RepoAnalyzer
+from code_analyzer import CodeAnalyzer
 from repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
 
 
 async def main(config: Config, focus_files: list[str], other_files: list[str]):
-    analyzer = RepoAnalyzer(config)
+    analyzer = CodeAnalyzer(config)
 
     all_files = focus_files + other_files
     file_infos = await analyzer.analyze_files(all_files)

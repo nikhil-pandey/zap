@@ -2,7 +2,7 @@ from flask import Flask, jsonify, send_from_directory, request
 import networkx as nx
 from pathlib import Path
 import asyncio
-from zap.git_analyzer.repo_map.repo_analyzer import RepoAnalyzer
+from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.git_analyzer.repo_map.config import Config
 
@@ -15,7 +15,7 @@ def get_repo_analyzer(repo_path=None):
     global repo_analyzer
     if repo_analyzer is None or repo_path:
         config = Config(repo_path, repo_url=repo_path if repo_path and repo_path.startswith(("http://", "https://")) else None)
-        repo_analyzer = RepoAnalyzer(config)
+        repo_analyzer = CodeAnalyzer(config)
     return repo_analyzer
 
 
