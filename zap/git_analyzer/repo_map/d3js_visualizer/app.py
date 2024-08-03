@@ -11,13 +11,41 @@ app = Flask(__name__)
 repo_analyzer = None
 
 
-def get_repo_analyzer():
+def get_repo_analyzer(repo_path=None):
     global repo_analyzer
-    if repo_analyzer is None:
-        repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
-        config = Config(repo_path)
+    if repo_analyzer is None or repo_path:
+        config = Config(repo_path, repo_url=repo_path if repo_path and repo_path.startswith(("http://", "https://")) else None)
         repo_analyzer = RepoAnalyzer(config)
     return repo_analyzer
+
+
+@app.route('/analyze')
+async def analyze_repo():
+    repo_path = request.args.get('repo_path', '')
+    if not repo_path:
+        return jsonify({'error': 'No repository URL or file path provided'}), 400
+
+    repo_analyzer = get_repo_analyzer(repo_path)
+    try:
+        # Assume focus_files and other_files are empty initially; you can extend this as needed.
+        focus_files = []
+        other_files = [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py") if p not in focus_files]
+        all_files = focus_files + other_files
+        if not all_files:
+            all_files = [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py")]
+
+        file_infos = await repo_analyzer.analyze_files(all_files)
+        graph = await repo_analyzer.build_graph(file_infos)
+        repo_map = RepoMap(graph, file_infos)
+
+        # Preload focus files in the front-end
+        return jsonify({
+            'focus_files': [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py")]
+        })
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except RuntimeError as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/graph')
@@ -31,7 +59,7 @@ async def get_graph():
         return jsonify({'error': 'No focus files provided'}), 400
 
     repo_analyzer = get_repo_analyzer()
-    repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'
+    repo_path = repo_analyzer.config.root_path
     other_files = [str(p) for p in Path(repo_path).rglob("*.py") if p not in focus_files]
 
     all_files = focus_files + other_files
@@ -56,7 +84,8 @@ async def get_graph():
 
 @app.route('/focus_files')
 async def get_focus_files():
-    repo_path = '/Users/nikhilpandey/Projects/zapfinal/zap'  # Update this to your repo path
+    repo_analyzer = get_repo_analyzer()
+    repo_path = repo_analyzer.config.root_path
     all_files = [str(p) for p in Path(repo_path).rglob("*.py")]
     return jsonify(all_files)
 
@@ -74,3 +103,4 @@ if __name__ == "__main__":
     config.bind = ["0.0.0.0:5001"]
 
     asyncio.run(serve(app, config))
+

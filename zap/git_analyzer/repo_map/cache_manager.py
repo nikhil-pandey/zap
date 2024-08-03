@@ -25,6 +25,7 @@ class CacheManager:
             await db.commit()
 
     async def get_cache(self, file_path: str) -> Optional[Dict[str, Any]]:
+        await self._create_table()
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
                 "SELECT mtime, tags, version FROM file_cache WHERE file_path = ?",
@@ -39,6 +40,7 @@ class CacheManager:
         return None
 
     async def set_cache(self, file_path: str, mtime: float, tags: list[dict[str, Any]]):
+        await self._create_table()
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 "INSERT OR REPLACE INTO file_cache (file_path, mtime, tags, version) VALUES (?, ?, ?, ?)",
@@ -47,11 +49,13 @@ class CacheManager:
             await db.commit()
 
     async def clear_cache(self):
+        await self._create_table()
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("DELETE FROM file_cache")
             await db.commit()
 
     async def query_symbol(self, symbol: str) -> List[Dict[str, Any]]:
+        await self._create_table()
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
                 "SELECT file_path, tags FROM file_cache WHERE tags LIKE ?",
@@ -67,3 +71,4 @@ class CacheManager:
                 if tag_data['name'] == symbol:
                     tags.append(tag_data)
         return tags
+

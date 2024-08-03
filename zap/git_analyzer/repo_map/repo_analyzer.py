@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 import asyncio
+import tempfile
+import shutil
+import pygit2
 
 from zap.git_analyzer.repo_map.config import Config
 from zap.git_analyzer.repo_map.models import FileInfo, GraphNode, Tag
@@ -12,8 +15,17 @@ from zap.git_analyzer.logger import LOGGER
 class RepoAnalyzer:
     def __init__(self, config: Config):
         self.config = config
-        self.tag_extractor = TagExtractor(config.root_path, config.encoding)
-        self.cache_manager = CacheManager(os.path.join(self.config.root_path, config.cache_dir))
+        self.temp_dir = None
+        self._clone_repo_if_needed()
+        # After the clone
+        self.tag_extractor = TagExtractor(self.config.root_path, config.encoding)
+        self.cache_manager = CacheManager(str(os.path.join(self.config.root_path, config.cache_dir)))
+
+    def _clone_repo_if_needed(self):
+        if self.config.repo_url:
+            self.temp_dir = str(tempfile.mkdtemp())
+            pygit2.clone_repository(self.config.repo_url, self.temp_dir, depth=1)
+            self.config.update_root_path(str(self.temp_dir))
 
     async def analyze_files(self, file_paths: list[str]) -> dict[str, FileInfo]:
         file_infos = {}
@@ -88,5 +100,5 @@ class RepoAnalyzer:
         return [Tag(**tag) for tag in tag_data]
 
     async def close(self):
-        if hasattr(self, 'cache_manager'):
-            await self.cache_manager.close()
+        if self.temp_dir:
+            shutil.rmtree(self.temp_dir)

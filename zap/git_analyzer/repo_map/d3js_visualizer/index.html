@@ -56,7 +56,7 @@
             opacity: 0;
         }
 
-        #focus-file-select, #mentioned-idents-input {
+        #focus-file-select, #mentioned-idents-input, #repo-path-input {
             display: block;
             margin: 10px auto;
             padding: 5px;
@@ -85,7 +85,7 @@
             width: 200px;
         }
 
-        #download-btn {
+        #download-btn, #analyze-btn {
             display: block;
             margin: 10px auto;
             padding: 10px 20px;
@@ -99,6 +99,8 @@
 </head>
 <body>
 <h1>Graph Visualization</h1>
+<input type="text" id="repo-path-input" placeholder="Enter repo URL or file path">
+<button id="analyze-btn">Analyze</button>
 <input type="text" id="search-box" placeholder="Search File">
 <select id="focus-file-select" multiple size="10">
     <option value="">Select Focus Files</option>
@@ -132,6 +134,8 @@
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip");
 
+    const repoPathInput = document.getElementById('repo-path-input');
+    const analyzeBtn = document.getElementById('analyze-btn');
     const focusFileSelect = document.getElementById('focus-file-select');
     const searchBox = document.getElementById('search-box');
     const mentionedIdentsInput = document.getElementById('mentioned-idents-input');
@@ -311,6 +315,27 @@
     });
 
     downloadBtn.addEventListener('click', downloadGraph);
+
+    analyzeBtn.addEventListener('click', function () {
+        const repoPath = repoPathInput.value;
+        if (repoPath) {
+            fetch(`/analyze?repo_path=${encodeURIComponent(repoPath)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                    } else {
+                        loadFocusFiles();
+                        loadGraph([], []);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error analyzing repository:", error);
+                });
+        } else {
+            alert("Please enter a repository URL or file path.");
+        }
+    });
 
     loadFocusFiles();
     loadGraph([], []);
