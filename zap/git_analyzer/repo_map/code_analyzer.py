@@ -5,14 +5,14 @@ import tempfile
 import shutil
 import pygit2
 
-from zap.git_analyzer.repo_map.config import Config
+from zap.git_analyzer.repo_map.codeanalyzerconfig import CodeAnalyzerConfig
 from zap.git_analyzer.repo_map.models import FileInfo, GraphNode, Tag
 from zap.git_analyzer.repo_map.tag_extractor import TagExtractor
 from zap.git_analyzer.repo_map.cache_manager import CacheManager
 from zap.git_analyzer.logger import LOGGER
 
 class CodeAnalyzer:
-    def __init__(self, config: Config):
+    def __init__(self, config: CodeAnalyzerConfig):
         self.config = config
         self.temp_dir = None
         self._clone_repo_if_needed()

@@ -1,4 +1,3 @@
-import asyncio
 from typing import Optional
 
 from .config import GitAnalyzerConfig

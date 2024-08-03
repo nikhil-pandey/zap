@@ -3,7 +3,7 @@ import tempfile
 import os
 from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
-from zap.git_analyzer.repo_map.config import Config
+from zap.git_analyzer.repo_map.codeanalyzerconfig import CodeAnalyzerConfig
 import networkx as nx
 
 
@@ -12,7 +12,7 @@ class TestRepoMap(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
         self.repo_path = self.test_dir.name
-        self.config = Config()
+        self.config = CodeAnalyzerConfig()
         self.repo_analyzer = CodeAnalyzer(self.repo_path, self.config)
 
         self.python_file_content = """

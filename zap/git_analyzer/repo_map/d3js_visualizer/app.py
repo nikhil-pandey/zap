@@ -4,20 +4,26 @@ from pathlib import Path
 import asyncio
 from zap.git_analyzer.repo_map.code_analyzer import CodeAnalyzer
 from zap.git_analyzer.repo_map.repo_map import RepoMap
-from zap.git_analyzer.repo_map.config import Config
+from zap.git_analyzer.repo_map.codeanalyzerconfig import CodeAnalyzerConfig
 from zap.git_analyzer.logger import LOGGER
 
 app = Flask(__name__)
 
-repo_analyzer = None
+code_analyzer = None
 
-def get_repo_analyzer(repo_path=None):
-    global repo_analyzer
-    if repo_analyzer is None or repo_path:
-        config = Config(repo_path, repo_url=repo_path if repo_path and repo_path.startswith(("http://", "https://")) else None)
-        repo_analyzer = CodeAnalyzer(config)
-        LOGGER.info(f"RepoAnalyzer initialized for {repo_path}")
-    return repo_analyzer
+
+def get_code_analyzer(repo_path=None):
+    global code_analyzer
+    if code_analyzer is None or repo_path:
+        config = CodeAnalyzerConfig(repo_path,
+                                    repo_url=repo_path if repo_path and repo_path.startswith(("http://", "https://")) else None)
+        if config.root_path or config.repo_url:
+            code_analyzer = CodeAnalyzer(config)
+            LOGGER.info(f"RepoAnalyzer initialized for {repo_path}")
+        else:
+            LOGGER.error("No repository URL or file path provided")
+    return code_analyzer
+
 
 @app.route('/analyze')
 async def analyze_repo():
@@ -26,7 +32,7 @@ async def analyze_repo():
         LOGGER.error("No repository URL or file path provided")
         return jsonify({'error': 'No repository URL or file path provided'}), 400
 
-    repo_analyzer = get_repo_analyzer(repo_path)
+    repo_analyzer = get_code_analyzer(repo_path)
     try:
         focus_files = []
         other_files = [str(p) for p in Path(repo_analyzer.config.root_path).rglob("*.py") if p not in focus_files]
@@ -49,6 +55,7 @@ async def analyze_repo():
         LOGGER.error(f"RuntimeError: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/graph')
 async def get_graph():
     focus_file = request.args.get('focus_file', '')
@@ -60,7 +67,7 @@ async def get_graph():
         LOGGER.error("No focus files provided")
         return jsonify({'error': 'No focus files provided'}), 400
 
-    repo_analyzer = get_repo_analyzer()
+    repo_analyzer = get_code_analyzer()
     repo_path = repo_analyzer.config.root_path
     other_files = [str(p) for p in Path(repo_path).rglob("*.py") if p not in focus_files]
 
@@ -85,17 +92,23 @@ async def get_graph():
         LOGGER.error(f"RuntimeError: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+
 @app.route('/focus_files')
 async def get_focus_files():
-    repo_analyzer = get_repo_analyzer()
+    repo_analyzer = get_code_analyzer()
+    if not repo_analyzer:
+        LOGGER.error("No repository URL or file path provided")
+        return jsonify({'error': 'No repository URL or file path provided'}), 400
     repo_path = repo_analyzer.config.root_path
     all_files = [str(p) for p in Path(repo_path).rglob("*.py")]
     LOGGER.info("Focus files fetched")
     return jsonify(all_files)
 
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
+
 
 if __name__ == "__main__":
     from hypercorn.asyncio import serve
