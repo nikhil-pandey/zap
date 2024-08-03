@@ -19,8 +19,8 @@ from zap.commands.command_registry import CommandRegistry
 class UserInput:
     message: Optional[str] = None
     command: Optional[str] = None
-    file_paths: Optional[List[str]] = None
-    symbols: Optional[Set[str]] = None
+    file_paths: Optional[set[str]] = None
+    symbols: Optional[set[str]] = None
 
 
 class AdvancedInput:
@@ -80,15 +80,15 @@ class AdvancedInput:
             else:
                 event.current_buffer.validate_and_handle()
 
-    def extract_file_paths_and_symbols(self, text: str) -> (List[str], Set[str]):
-        file_paths = []
+    def extract_file_paths_and_symbols(self, text: str) -> (set[str], Set[str]):
+        file_paths = set()
         symbols = set()
         words = re.findall(r'\b\w+\b', text)
 
         for word in words:
             word_lower = word.lower()
             if word_lower in self.filename_to_path:
-                file_paths.extend(self.filename_to_path[word_lower])
+                file_paths.update(self.filename_to_path[word_lower])
             if word_lower in self.symbol_filter:
                 symbols.add(word_lower)
 
