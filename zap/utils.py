@@ -3,7 +3,6 @@ import platform
 import aiofiles
 import re
 from collections import defaultdict
-import heapq
 
 from zap.constants import EXTENSION_TO_COMMENT
 from zap.git_analyzer.repo_map.models import Tag

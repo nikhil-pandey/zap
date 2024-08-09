@@ -31,7 +31,6 @@ from zap.git_analyzer.repo_map.repo_map import RepoMap
 from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import register_tools
 from zap.tools.tool_manager import ToolManager
-from zap.utils import get_tokenizer_model
 
 
 class ZapApp:
@@ -66,7 +65,6 @@ class ZapApp:
             root_path=self.state.git_repo.root,
         )
         self.code_analyzer = CodeAnalyzer(code_analyzer)
-        self.state.code_analyzer = self.code_analyzer
         file_infos = await self.code_analyzer.analyze_files(await self.git_analyzer.git_repo.get_tracked_files())
         graph = await self.code_analyzer.build_graph(file_infos)
         self.repo_map = RepoMap(graph, file_infos)
@@ -88,7 +86,7 @@ class ZapApp:
         default_agent = self.agent_manager.get_agent(self.config.agent)
         if default_agent.config.model.startswith("gpt"):
             self.state.tokenizer = tiktoken.encoding_for_model(
-                await get_tokenizer_model(default_agent.config.provider, default_agent.config.model)
+                default_agent.config.model
             )
         self.context_manager = ContextManager(self.agent_manager, self.config.agent)
         if self.config.auto_archive_contexts:
@@ -131,7 +129,7 @@ class ZapApp:
                 self.ui.print(f"Filepaths: {user_input.file_paths}")
                 self.ui.print(f"Symbols: {user_input.symbols}")
 
-                await self.handle_input(user_input, context, agent)
+                await self.handle_input(user_input.message, context, agent)
             except KeyboardInterrupt:
                 current_time = time.time()
                 diff = current_time - self.last_interrupt_time
@@ -215,16 +213,16 @@ class ZapApp:
             agent = self.agent_manager.get_agent(context.current_agent)
             await self.handle_input(task, context, agent)
 
-    async def handle_input(self, user_input: UserInput, context, agent):
-        if user_input.command is not None:
-            if user_input.command in {'exit', 'quit', 'q'}:
-                self.ui.print("Exiting...")
-                sys.exit()
-            await self.commands.run_command(user_input.command)
+    async def handle_input(self, user_input, context, agent):
+        if user_input.startswith("/"):
+            await self.commands.run_command(user_input)
+        elif user_input in ["exit", "quit", "q", "/exit"]:
+            self.ui.print("Exiting...")
+            sys.exit()
         else:
             await self.chat_async(user_input, context, agent)
 
-    async def chat_async(self, user_input: UserInput, context: Context, agent: Agent):
+    async def chat_async(self, user_input: str, context: Context, agent: Agent):
         template_context = await build_agent_template_context(
             user_input,
             context,
@@ -232,15 +230,13 @@ class ZapApp:
             self.state,
             self.config,
             self.context_manager.contexts,
-            # TODO: make sure this gets updated as files change
-            self.repo_map,
         )
-        rendered_input = await self.template_engine.render(user_input.message, template_context)
+        rendered_input = await self.template_engine.render(user_input, template_context)
         output = await agent.process(rendered_input, context, template_context)
 
         for msg in output.message_history:
             chat_message = ChatMessage.from_agent_output(msg, agent.config.name)
-            chat_message.metadata["raw_input"] = user_input.message
+            chat_message.metadata["raw_input"] = user_input
             if user_input != rendered_input:
                 chat_message.metadata["rendered_input"] = rendered_input
             context.add_message(chat_message)
