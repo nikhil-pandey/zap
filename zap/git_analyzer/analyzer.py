@@ -16,7 +16,7 @@ class GitAnalyzer:
     def __init__(self, path: Optional[str] = None, config: Optional[GitAnalyzerConfig] = None):
         self.config = config or GitAnalyzerConfig()
         set_log_level(self.config.log_level)
-        self.git_repo = GitRepo(path)
+        self.git_repo = GitRepo(path, allowlisted_paths=self.config.allowlisted_paths)
         self.repo_explorer = RepoExplorer(self.git_repo, self.config)
 
     async def analyze(self) -> ExplorationResult:
