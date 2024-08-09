@@ -7,6 +7,7 @@ import logging
 CACHE_VERSION = 1
 LOGGER = logging.getLogger("git_analyzer")
 
+
 class CacheManager:
     def __init__(self, cache_dir: str):
         self.cache_dir = Path(cache_dir)
@@ -25,7 +26,6 @@ class CacheManager:
                 )
             ''')
             await db.commit()
-            LOGGER.info("Table 'file_cache' ensured in database")
 
     async def get_cache(self, file_path: str) -> Optional[Dict[str, Any]]:
         await self._create_table()

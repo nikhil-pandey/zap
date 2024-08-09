@@ -1,6 +1,6 @@
 import asyncio
 import os
-from typing import Annotated
+from typing import Annotated, Optional
 
 from zap.app_state import AppState
 from zap.cliux import UIInterface
@@ -45,12 +45,13 @@ class ReadFileTool(Tool):
             raise ValueError("Path is outside the repository boundary.")
         if not os.path.exists(full_path):
             raise FileNotFoundError(f"File {filename} does not exist.")
-        with open(full_path, "r") as file:
+        with open(full_path, "r", encoding='utf-8') as file:
             lines = file.readlines()
 
         # Prefix lines with line numbers
-        prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
-        content = "".join(prefixed_lines)
+        # prefixed_lines = [f"|{idx + 1:03d}|{line}" for idx, line in enumerate(lines)]
+        # content = "".join(prefixed_lines)
+        content = "".join(lines)
 
         return {"status": "success", "content": content, "size": len(content)}
 
@@ -262,7 +263,7 @@ class EditFileTool(Tool):
         end_line -= 1
 
         # Replace lines
-        lines[start_line : end_line + 1] = [content + "\n"]
+        lines[start_line: end_line + 1] = [content + "\n"]
 
         with open(full_path, "w", encoding="utf-8") as file:
             file.writelines(lines)
@@ -271,6 +272,66 @@ class EditFileTool(Tool):
             "status": "success" if abs(end_line - start_line) < 20 else "warning",
             "message": f"File {filename} edited successfully.",
             "edited_lines": f"{start_line + 1}-{end_line + 1}",
+        }
+
+
+class ReplaceBlockTool(Tool):
+    def __init__(self, app_state: AppState):
+        super().__init__("search_replace", "Replace a block of text in a file.")
+        self.app_state = app_state
+
+    async def execute(
+        self,
+        filename: Annotated[str, "Path to the file to edit"],
+        search_block: Annotated[str, "Block of text to search for"],
+        replace_block: Annotated[str, "Block of text to replace with"],
+    ):
+        full_path = os.path.join(self.app_state.git_repo.root, filename)
+        if not full_path.startswith(self.app_state.git_repo.root):
+            raise ValueError("Path is outside the repository boundary.")
+        if not os.path.exists(full_path) or search_block is None or search_block == "":
+            os.makedirs(os.path.dirname(full_path), exist_ok=True)
+            with open(full_path, "w", encoding="utf-8") as file:
+                file.write(replace_block)
+            return {
+                "status": "success",
+                "message": f"File {filename} created successfully.",
+            }
+
+        with open(full_path, "r", encoding="utf-8") as file:
+            content = file.read()
+
+        if search_block not in content:
+            return {
+                "status": "failed",
+                "message": f"Search block not found in file {filename}. Make sure everything including whitespace is correct.",
+            }
+
+        updated_content = content.replace(search_block, replace_block)
+
+        with open(full_path, "w", encoding="utf-8") as file:
+            file.write(updated_content)
+
+        return {
+            "status": "success",
+            "message": f"Block replaced successfully in file {filename}.",
+        }
+
+
+class SearchTagTool(Tool):
+    def __init__(self, app_state: AppState):
+        super().__init__("search_symbol", "Search for a symbol within the repository boundary.")
+        self.app_state = app_state
+
+    async def execute(self, symbol: Annotated[str, "Symbol to search for"],
+                      kind: Optional[Annotated[str, "Filter by kind (def or ref)"]] = None):
+        tag_data = await self.app_state.code_analyzer.query_symbol(symbol)
+        if kind:
+            tag_data = [tag for tag in tag_data if tag.kind == kind]
+        return {
+            "status": "success",
+            "tags": [tag.__dict__ for tag in tag_data],
+            "count": len(tag_data)
         }
 
 
@@ -284,4 +345,6 @@ def register_tools(tool_manager: ToolManager, app_state: AppState, ui: UIInterfa
     tool_manager.register_tool(RunTestsTool(app_state))
     tool_manager.register_tool(LintProjectTool(app_state))
     tool_manager.register_tool(RawShellCommandTool(app_state))
-    tool_manager.register_tool(EditFileTool(app_state))  # New Tool Registered
+    tool_manager.register_tool(EditFileTool(app_state))
+    tool_manager.register_tool(ReplaceBlockTool(app_state))
+    tool_manager.register_tool(SearchTagTool(app_state))

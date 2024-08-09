@@ -5,7 +5,8 @@ from typing import List, Set
 @dataclass
 class Tag:
     path: str
-    line: int
+    start_line: int
+    end_line: int
     name: str
     kind: str
     body: str = ""

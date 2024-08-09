@@ -14,6 +14,7 @@ class GitAnalyzerConfig:
     least_changed_files_limit: Optional[int] = 10
     log_level: Optional[str] = "INFO"
     explore: Optional[bool] = True
+    allowlisted_paths: Optional[list[str]] = None
 
     @classmethod
     def from_dict(cls, config_dict: Dict[str, Any]) -> "GitAnalyzerConfig":
@@ -23,6 +24,7 @@ class GitAnalyzerConfig:
             least_changed_files_limit=config_dict.get("least_changed_files_limit", 10),
             log_level=config_dict.get("log_level", "INFO"),
             explore=config_dict.get("explore", True),
+            allowlisted_paths=config_dict.get("allowlisted_paths", None),
         )
 
     @classmethod
@@ -38,13 +40,3 @@ class GitAnalyzerConfig:
                 return cls.from_dict(toml.load(f))
         else:
             raise ValueError("Unsupported file format. Use JSON, YAML, or TOML.")
-
-    @classmethod
-    def load_config(cls, config_path: Path = None) -> "GitAnalyzerConfig":
-        if config_path is None:
-            config_path = Path(__file__).parent / "git_analyzer_config.yaml"
-
-        if config_path.exists():
-            return cls.from_file(str(config_path))
-        else:
-            return cls()

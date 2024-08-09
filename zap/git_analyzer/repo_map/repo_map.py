@@ -5,6 +5,7 @@ import logging
 
 LOGGER = logging.getLogger("git_analyzer")
 
+
 class RepoMap:
     def __init__(self, graph: Dict[str, GraphNode], file_infos: Dict[str, FileInfo]):
         self.graph = graph

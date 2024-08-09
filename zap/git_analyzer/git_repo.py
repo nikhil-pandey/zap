@@ -12,7 +12,7 @@ from zap.git_analyzer.utils.constants import SEPARATOR
 
 
 class GitRepo:
-    def __init__(self, path: str = None):
+    def __init__(self, path: str = None, allowlisted_paths: List[str] = None):
         if path is None:
             path = os.getcwd()
         self.path = path
@@ -24,6 +24,7 @@ class GitRepo:
         # TODO: this is probably unused with the latest implemetnation
         self.suffix_trie = pygtrie.StringTrie(separator=SEPARATOR)
         self.filename_to_paths = {}
+        self.allowlisted_paths = allowlisted_paths
 
     async def refresh(self):
         # TODO: make refresh less frequent for performance
@@ -31,6 +32,11 @@ class GitRepo:
         self.file_trie.clear()
         self.suffix_trie.clear()
         for entry in self.repo.index:
+            if self.allowlisted_paths and not any(
+                entry.path.startswith(path) for path in self.allowlisted_paths
+            ):
+                continue
+
             self.file_trie[entry.path] = True
             path = SEPARATOR.join(reversed(entry.path.split(SEPARATOR)))
             self.suffix_trie[path] = entry.path

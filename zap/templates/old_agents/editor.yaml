@@ -9,4 +9,3 @@ tools:
   - lint_project
   - run_tests
   - shell_command
-  - search_replace

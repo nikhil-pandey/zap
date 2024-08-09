@@ -1,15 +1,20 @@
-Task description:
-<task>
-{{ message }}
-</task>
-Project context:
-- Repository Root: {{ root }}
-- OS: {{ os }}
-Repository Metadata:
-<repoMetadata>
-{{ repo_metadata }}
-</repoMetadata>
-File contents (DO NOT use read_file for these). If you use read_file for these file, you will receive a penalty:
-<fileContents>
+Project Metadata:
+- **Dependencies**:
+{% for file, info in repo_metadata['project_info']['dependencies'].items() %}
+    - **File**: {{ file }}
+    - **Language**: {{ info.language }}
+    - **Package Manager**: {{ info.package_manager }}
+    - **Dependencies**:
+    {% for dep in info.dependencies %}
+        - {{ dep }}
+    {%- endfor %}
+{% endfor %}
+Map:
+{{ repo_map }}
+
+Most relevant files:
 {{ files }}
-</fileContents>
+
+<task>
+    {{ message }}
+</task>

@@ -14,15 +14,16 @@ from zap.templating import ZapTemplateEngine
 from zap.tools.basic_tools import EditFileTool
 from zap.tools.tool import tool_executor
 from zap.tools.tool_manager import ToolManager
+from zap.utils import get_lite_llm_model
 
 
 class Agent(ABC):
     def __init__(
-            self,
-            config: AgentConfig,
-            tool_manager: ToolManager,
-            ui: UIInterface,
-            engine: ZapTemplateEngine,
+        self,
+        config: AgentConfig,
+        tool_manager: ToolManager,
+        ui: UIInterface,
+        engine: ZapTemplateEngine,
     ):
         self.config = config
         self.tool_manager = tool_manager
@@ -47,7 +48,7 @@ class Agent(ABC):
         return tool_schemas
 
     async def process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         try:
             return await self._try_process(message, context, template_context)
@@ -66,7 +67,7 @@ class Agent(ABC):
         retry=retry_if_exception_type(RateLimitError)
     )
     async def _try_process(
-            self, message: str, context: Context, template_context: dict
+        self, message: str, context: Context, template_context: dict
     ) -> AgentOutput:
         messages = await self._prepare_messages(message, context, template_context)
         original_message_count = len(messages)
@@ -104,6 +105,9 @@ class Agent(ABC):
                 self.config.system_prompt, template_context
             )
             messages.append({"role": "system", "content": system_prompt})
+            examples = await self.get_examples()
+            if examples:
+                messages.extend(examples)
 
             if self.config.user_prompt:
                 user_prompt = await self.engine.render_file(
@@ -120,7 +124,7 @@ class Agent(ABC):
     async def _get_model_response(self, messages: List[Dict[str, Any]]):
         with self.ui.spinner(f"Thinking..."):
             return await acompletion(
-                model=self.config.model,
+                model=await get_lite_llm_model(self.config.provider, self.config.model),
                 messages=messages,
                 tools=self.tool_schemas if self.supports_tool_calling and self.tool_schemas else None,
                 tool_choice="auto" if self.supports_tool_calling and self.tool_schemas else None,
@@ -166,7 +170,7 @@ class Agent(ABC):
         }
 
     async def handle_tool_calls(
-            self, round: int, tool_calls: List[Any]
+        self, round: int, tool_calls: List[Any]
     ) -> List[Dict[str, Any]]:
         tool_responses = []
         valid_tool_calls = self._validate_tool_calls(tool_calls, tool_responses)
@@ -224,3 +228,6 @@ class Agent(ABC):
     @tool_executor
     async def handle_tool_call(self, tool, function_args):
         return await tool.execute(**function_args)
+
+    async def get_examples(self) -> list[dict]:
+        return []
